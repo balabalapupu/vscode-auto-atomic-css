@@ -1,0 +1,84 @@
+@import './stylehub.less';
+
+html,
+body {
+    .m-0();
+    .p-0();
+    .h-full();
+    .w-full();
+    .fz-16();
+    .bg-fill-1();
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+}
+
+.not-mac-os {
+    ::-webkit-scrollbar {
+        height: 8px;
+        width: 8px;
+        background-color: #b9b9b9;
+    }
+
+    ::-webkit-scrollbar-button {
+        display: none;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        border-radius: 10px;
+        background-color: #b9b9b9;
+    }
+
+    ::-webkit-scrollbar-track {
+        border-radius: 10px;
+        background-color: #fff;
+    }
+}
+
+body > *::-webkit-scrollbar {
+    display: none;
+}
+
+html::-webkit-scrollbar {
+    display: none;
+}
+
+body::-webkit-scrollbar {
+    display: none;
+}
+
+section::-webkit-scrollbar {
+    display: none;
+}
+
+main::-webkit-scrollbar {
+    display: none;
+}
+
+iframe::-webkit-scrollbar {
+    display: none;
+}
+
+.hover-active {
+}
+
+.hover-active:hover {
+    color: #colors[primary];
+}
+
+.hover-shadow {
+}
+
+.hover-shadow:hover {
+    background-color: #colors[fill-1];
+    text-decoration: none;
+}
+
+.active {
+    color: #colors[primary];
+}
+
+.text-ellipsis {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}

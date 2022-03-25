@@ -1,44 +1,18 @@
 /* eslint-disable curly */
-import * as vscode from "vscode";
 const fs = require("fs");
 const path = require("path");
-type StyleType = {
-  [propName: string]: string;
-};
-
+import * as vscode from "vscode";
+import getCommonStyle from "./utils/common-style";
 import {
-  isAtStartOfSmiley,
-  getClassInStyle,
-  handleSplitNameAndAttribute,
-  getStyleOfStylehubFile,
-  createFix,
-  dfsConvertCSS,
-  dfsFixedCSS,
-} from "./utils/index";
+  parseCurrentCSS,
+  translateCurrentCSS,
+  generateCurrentCSS,
+} from "./utils/css-ast-func";
+import { isAtStartOfSmiley, getClassInStyle, createFix } from "./utils/index";
 
-const COMMAND = "auto-atomic-css.command";
+let entryPath = "";
 
-let styleFileLink: vscode.Uri[];
-let currentStyleStore: { [propName: string]: { [propName: string]: string } };
-let textEditor: vscode.TextEditor;
 export async function activate(context: vscode.ExtensionContext) {
-  styleFileLink = await vscode.workspace.findFiles(
-    "**/demoStyle.less",
-    " /node_modules/ ",
-    10
-  );
-  vscode.window.onDidChangeActiveTextEditor(
-    (editor) => {
-      if (!editor) {
-        return;
-      }
-      textEditor = editor;
-      const res = getStyleOfStylehubFile(editor.document, styleFileLink);
-      currentStyleStore = res;
-    },
-    null,
-    context.subscriptions
-  );
   const actionsProvider = vscode.languages.registerCodeActionsProvider(
     "vue",
     new AutoAtomicCss(),
@@ -46,7 +20,28 @@ export async function activate(context: vscode.ExtensionContext) {
       providedCodeActionKinds: [vscode.CodeActionKind.QuickFix],
     }
   );
-  context.subscriptions.push(actionsProvider);
+  const disposable = vscode.commands.registerCommand(
+    "auto-atomic-doing",
+    () => {
+      // Display a message box to the user
+      vscode.window.showInformationMessage("auto-atomic-css start!");
+      vscode.window
+        .showOpenDialog({
+          // 可选对象
+          canSelectFiles: true, // 是否可选文件
+          canSelectFolders: false, // 是否可选文件夹
+          canSelectMany: true, // 是否可以选择多个
+          defaultUri: vscode.Uri.file("/D:/"), // 默认打开本地路径
+          openLabel: "set the address of common atomic entry",
+        })
+        .then((msg) => {
+          if (!msg) return;
+          entryPath = msg[0].path;
+          context.subscriptions.push(actionsProvider);
+        });
+    }
+  );
+  context.subscriptions.push(disposable);
 }
 
 export function deactivate() {}
@@ -55,54 +50,47 @@ export class AutoAtomicCss implements vscode.CodeActionProvider {
   public static readonly providedCodeActionKinds = [
     vscode.CodeActionKind.QuickFix,
   ];
-  provideCodeActions(
+  async provideCodeActions(
     document: vscode.TextDocument,
     range: vscode.Range
-  ): vscode.CodeAction[] | undefined {
-    if (
-      !textEditor ||
-      !currentStyleStore ||
-      !isAtStartOfSmiley(document, range)
-    )
-      return;
-    // 1. 获取需要修改的完整样式
+  ): Promise<vscode.CodeAction[] | undefined> {
+    if (!isAtStartOfSmiley(document, range)) return;
+    const commonStyleList = await getCommonStyle(entryPath);
     const { classInStyleText, classInStyleRange } = getClassInStyle(
       document,
       range
     );
-
-    // 2. 拆分当前 class 的属性
-    const { outputClassName, transOutputStyleObject } =
-      handleSplitNameAndAttribute(classInStyleText);
-
-    // 3. 拿到 stylehub 中存储的属性
-    const styleStore = getStyleOfStylehubFile(document, styleFileLink);
-    // 4. 通过 stylehub 转换当前 class 中的属性
+    const { outputClassName, transOutputStyleObject } = parseCurrentCSS({
+      resultText: classInStyleText,
+    });
     const convertedCssStyle: ConvertedCssStyleType = {};
     Reflect.ownKeys(transOutputStyleObject).forEach((item) => {
       if (typeof item !== "string") return;
-      const v = dfsConvertCSS(transOutputStyleObject[item], item, styleStore);
-      convertedCssStyle[item] = v;
+      const transferedData = translateCurrentCSS({
+        name: item,
+        config: transOutputStyleObject[item],
+        commonStyleList,
+      });
+      convertedCssStyle[item] = transferedData;
     });
-
-    let resultString = "";
+    let generatorString = "";
     Reflect.ownKeys(convertedCssStyle).forEach((item) => {
       if (typeof item !== "string") return;
-      const v = dfsFixedCSS(convertedCssStyle[item], item);
-      resultString = resultString.concat(v);
+      const v = generateCurrentCSS({
+        currentLayer: convertedCssStyle[item],
+        name: item,
+      });
+      generatorString = generatorString.concat(v);
     });
-    // 5. 代码修复逻辑
-    const _outputClassName = outputClassName.split(".")[1];
     const edit = new vscode.WorkspaceEdit();
-    edit.replace(document.uri, classInStyleRange, resultString);
+    edit.replace(document.uri, classInStyleRange, generatorString);
     const replaceWithSFixedStyle: vscode.WorkspaceEdit = createFix(
       document,
-      textEditor,
       convertedCssStyle,
       edit
     );
     const fix = new vscode.CodeAction(
-      `可以原子化 ${outputClassName}`,
+      `the class ${outputClassName} can convert to atomic css`,
       vscode.CodeActionKind.QuickFix
     );
     fix.edit = replaceWithSFixedStyle;

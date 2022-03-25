@@ -1,0 +1,97 @@
+@import "./stylehub.variables.less";
+@import "./stylehub.custom.less";
+@import "./stylehub.base.less";
+
+.bg {
+    .background-repeat-no-repeat();
+    .background-size-cover();
+}
+
+.ff-mt {
+    font-family: MEITUANTYPE-REGULAR;
+}
+
+.ff-pfscm {
+    font-family: PingFangSC-Medium;
+}
+
+.ff-pfscr {
+    font-family: PingFangSC-Regular;
+}
+
+.hover-no-underline {}
+
+.hover-no-underline:hover {
+    .text-decoration-none();
+}
+
+.easy-card {
+    .br-4();
+    .bg-white();
+    .p-12();
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, .01), 0 3px 6px 3px rgba(0, 0, 0, .01), 0 2px 6px 0 rgba(0, 0, 0, .03);
+}
+
+.hover-active {}
+
+.hover-active:hover {
+    color: #colors[primary-hover];
+}
+
+.text-ellipsis {
+    .overflow-hidden();
+    .white-space-nowrap();
+    .text-overflow-ellipsis();
+}
+
+
+.not-mac-os {
+    ::-webkit-scrollbar {
+        height          : #sizes[8];
+        width           : #sizes[8];
+        background-color: #b9b9b9;
+    }
+
+    ::-webkit-scrollbar-button {
+        display: none;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        border-radius   : #sizes[10];
+        background-color: #b9b9b9;
+    }
+
+    ::-webkit-scrollbar-track {
+        border-radius: #sizes[10];
+        .bg-white();
+    }
+}
+
+
+body>*::-webkit-scrollbar {
+    display: none;
+}
+
+html::-webkit-scrollbar {
+    display: none;
+}
+
+body::-webkit-scrollbar {
+    display: none;
+}
+
+section::-webkit-scrollbar {
+    display: none;
+}
+
+main::-webkit-scrollbar {
+    display: none;
+}
+
+iframe::-webkit-scrollbar {
+    display: none;
+}
+
+iframe {
+    .bs-none();
+}

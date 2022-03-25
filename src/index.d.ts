@@ -36,9 +36,7 @@ type AstType = {
 type ObjectType = {
   [propName: string]: string;
 };
-type ConvertedCssStyleType = {
-  [propName: string]: AnalyzedClassLabelType;
-};
+
 type AnalyzedClassLabelType = {
   fixedClassName: string;
   notFixedCss: {
@@ -59,4 +57,46 @@ type DFSObjectType = {
     | {
         [propName: string]: string;
       };
+};
+
+type CSSTYPE = {
+  css: string;
+};
+type ReadCssStyleDeclarationsType = {
+  position: {
+    [propsName: string]: string;
+  };
+  property: string;
+  type: string;
+  value: string;
+};
+type ReadCssStyleRuleType = {
+  declarations: ReadCssStyleDeclarationsType[];
+  position: {
+    [propsName: string]: string;
+  };
+  selectors: string[];
+  type: string;
+};
+type ReadCssStyleSheetType = {
+  parsingErrors: [];
+  rules: ReadCssStyleRuleType[];
+  source: string;
+};
+type ReadCssType = {
+  type: string;
+  stylesheet: ReadCssStyleSheetType;
+};
+
+type ConvertedCssStyleType = {
+  [propName: string]: TransferCSSDataByCommonCssConfigType;
+};
+type TransferCSSDataByCommonCssConfigType = {
+  fixedClassName: string[];
+  notFixedCss: {
+    [propsname: string]: string;
+  };
+  children: {
+    [propsname: string]: TransferCSSDataByCommonCssConfigType;
+  };
 };

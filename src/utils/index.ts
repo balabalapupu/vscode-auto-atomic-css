@@ -1,9 +1,15 @@
 /* eslint-disable curly */
 import * as vscode from "vscode";
-import * as espree from "espree";
 const _HTML = require("html-parse-stringify");
 const fs = require("fs");
 
+/**
+ * Determine whether the current focus range is a class name,
+ * and if the current editor focus has been determined, this will continue program
+ * @param document vscode.TextDocument
+ * @param range vscode.Range
+ * @returns boolean
+ */
 export function isAtStartOfSmiley(
   document: vscode.TextDocument,
   range: vscode.Range
@@ -22,7 +28,6 @@ export function getClassInStyle(
   classInStyleText: string;
   classInStyleRange: vscode.Range;
 } {
-  // 查找当前类的最后一行
   let findEndClass = false;
   let inwhileLoop = false;
   let classCountLoop: number = 0;
@@ -44,84 +49,10 @@ export function getClassInStyle(
     classInStyleRange: newRange,
   };
 }
-export function handleSplitNameAndAttribute(resultText: string): {
-  outputClassName: string;
-  transOutputStyleObject: DeepObjectType;
-} {
-  const transJSONText = JSON.stringify(resultText)
-    .trim()
-    .split("\\n")
-    .join("")
-    .replace(/^"([^"]+)"$/, (match, p1) => p1)
-    .split(" ")
-    .join("");
-  const styleObject: DeepObjectType = JSON.parse(
-    `{${transJSONText
-      .replaceAll(";", ",")
-      .replaceAll("{", ":{")
-      .replaceAll(/([\.])([\w\-]+)([\:])/g, (m, a, b, c) => `"${a}${b}"${c}`)
-      .replaceAll(/([\{\,])([\w\-]+)([\:])/g, (m, a, b, c) => `${a}"${b}"${c}`)
-      .replaceAll(/([\:])([\w\-\%]+)([\,])/g, (m, a, b, c) => `${a}"${b}"${c}`)
-      .replaceAll(/(\")(\,)(\})/g, (m, a, b, c) => `${a}${c}`)}}`
-  );
-  return {
-    outputClassName: Reflect.ownKeys(styleObject)[0] as string,
-    transOutputStyleObject: styleObject,
-  };
-}
-function getCheckFileDeep(tarPath: string, styPath: string) {
-  const tarPathArr = tarPath.split("/");
-  const styPathArr = styPath.split("/");
-  let result = 0;
-  tarPathArr.forEach((item, index) => {
-    if (item === styPathArr[index]) {
-      result = index;
-    }
-  });
-  return result;
-}
-export function getStyleOfStylehubFile(
-  document: vscode.TextDocument,
-  styleFileLink: vscode.Uri[]
-): DeepObjectType {
-  const styleStore: DeepObjectType = {};
-  let targetStylePath: number = 0;
-  let targetLen: number = 0;
-  styleFileLink.forEach((item, index) => {
-    const fileLen = getCheckFileDeep(document.uri.path, item.fsPath);
-    if (targetLen < fileLen) {
-      targetLen = fileLen;
-      targetStylePath = index;
-    }
-  });
-  const res = fs.readFileSync(styleFileLink[targetStylePath].fsPath, "utf-8");
-  const cssRes = res.split("\\n").join("");
-  cssRes
-    .split(".")
-    .filter((item: any) => item)
-    .forEach((item: string) => {
-      const { outputClassName, transOutputStyleObject } =
-        handleSplitNameAndAttribute(".".concat(item));
-      const outputAttribute = transOutputStyleObject[outputClassName];
-      const _name = Reflect.ownKeys(outputAttribute)[0] as string;
-      const _value = outputAttribute[_name];
-      styleStore[`u_${_name.trim()}`] = Reflect.has(
-        styleStore,
-        `u_${_name.trim()}`
-      )
-        ? {
-            ...styleStore[`u_${_name.trim()}`],
-            [`${_value.trim()}`]: outputClassName,
-          }
-        : { [`${_value.trim()}`]: outputClassName };
-    });
-  return styleStore;
-}
 
 export function createFix(
   document: vscode.TextDocument,
-  textEditor: vscode.TextEditor,
-  convertedCssStyle: ConvertedCssType,
+  convertedCssStyle: ConvertedCssStyleType,
   edit: vscode.WorkspaceEdit
 ): vscode.WorkspaceEdit {
   const targetMainClass = Reflect.ownKeys(convertedCssStyle)[0] as string;
@@ -129,10 +60,8 @@ export function createFix(
 
   const find = false;
   const line = 0;
-
-  // 假设一个目录只有一个嵌套 template
   let sl = 0,
-    el = textEditor.visibleRanges[0].end.line;
+    el = document.lineCount;
   while (sl <= el) {
     const curLineText = document.lineAt(sl);
     if (curLineText.text.includes("<template")) {
@@ -141,7 +70,7 @@ export function createFix(
     sl++;
   }
   while (el >= sl) {
-    const curLineText = document.lineAt(el);
+    const curLineText = document.lineAt(el - 1);
     if (curLineText.text.includes("</template")) {
       break;
     }
@@ -149,11 +78,10 @@ export function createFix(
   }
   const templateRange = new vscode.Range(
     new vscode.Position(sl, 0),
-    new vscode.Position(el + 1, 0)
+    new vscode.Position(el, 0)
   );
   const currentPageTemplace = document.getText(templateRange);
   const htmlToAst: AstType[] = _HTML.parse(currentPageTemplace);
-
   htmlToAst.forEach((item: AstType, index: number) => {
     if (item.type !== "tag") return;
     handleChangeHtmlAst(htmlToAst[index], targetMainAttribute, targetMainClass);
@@ -163,61 +91,9 @@ export function createFix(
   return edit;
 }
 
-export function dfsConvertCSS(
-  cssObjet: DFSObjectType,
-  name: string,
-  styleStore: DeepObjectType
-): AnalyzedClassLabelType {
-  const analyzedClassLabel: AnalyzedClassLabelType = {
-    fixedClassName: name,
-    notFixedCss: {},
-    children: {},
-  };
-  const currentLayerCss = Reflect.ownKeys(cssObjet).filter(
-    (item) => !item.toString().includes(".")
-  ) as string[];
-  const nextLayerCss = Reflect.ownKeys(cssObjet).filter((item) =>
-    item.toString().includes(".")
-  ) as string[];
-  currentLayerCss.forEach((_item) => {
-    if (typeof _item === "string") {
-      const key = cssObjet[_item] as string;
-      if (`u_${_item}` in styleStore && key in styleStore[`u_${_item}`]) {
-        analyzedClassLabel.fixedClassName =
-          analyzedClassLabel.fixedClassName.concat(
-            styleStore[`u_${_item}`][key]
-          );
-      } else {
-        analyzedClassLabel.notFixedCss[_item] = key;
-      }
-    }
-  });
-  nextLayerCss.forEach((_item) => {
-    if (typeof _item !== "string") return;
-    const key = cssObjet[_item] as DFSObjectType;
-    analyzedClassLabel.children[_item] = dfsConvertCSS(key, _item, styleStore);
-  });
-  return analyzedClassLabel;
-}
-
-export function dfsFixedCSS(dfs: outputCss, name: string): string {
-  let resultName = `${name} {`;
-  Reflect.ownKeys(dfs.notFixedCss).forEach((_item) => {
-    if (typeof _item !== "string") return;
-    resultName = resultName.concat(`\n${_item}: ${dfs.notFixedCss[_item]};`);
-  });
-  Reflect.ownKeys(dfs.children).forEach((_item) => {
-    if (typeof _item !== "string") return;
-    const v = dfsFixedCSS(dfs.children[_item], _item);
-    resultName = resultName.concat(`\n${v}`);
-  });
-  resultName = resultName.concat("\n}");
-  return resultName;
-}
-
 function handleChangeHtmlAst(
   ast: AstType,
-  currentStyleLayerAttribute: outputCss,
+  currentStyleLayerAttribute: TransferCSSDataByCommonCssConfigType,
   cssName: string
 ) {
   if (ast.children) {
@@ -235,9 +111,8 @@ function handleChangeHtmlAst(
     const _cssName = cssName.split(".")[1];
     const _index = astClassList.indexOf(_cssName);
     if (_index > -1) {
-      astClassList[_index] = currentStyleLayerAttribute.fixedClassName
-        .split(".")
-        .join(" ");
+      astClassList[_index] =
+        currentStyleLayerAttribute.fixedClassName.join(" ");
       ast.attrs.class = astClassList.join(" ");
       Reflect.ownKeys(currentStyleLayerAttribute.children).forEach((item) => {
         if (typeof item !== "string") return;

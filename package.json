@@ -10,14 +10,15 @@
     "Other"
   ],
   "activationEvents": [
-    "*"
+    "onCommand:auto-atomic-doing",
+    "onLanguage:vue"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "auto-atomic-css.command",
-        "title": "auto atomic css"
+        "command": "auto-atomic-doing",
+        "title": "auto atomic css do"
       }
     ]
   },
@@ -44,6 +45,10 @@
   },
   "dependencies": {
     "espree": "^9.3.1",
-    "html-parse-stringify": "^3.0.1"
+    "fs-extra": "^10.0.1",
+    "get-css-data": "^2.0.2",
+    "html-parse-stringify": "^3.0.1",
+    "less": "^4.1.2",
+    "read-css": "^0.3.0"
   }
 }
