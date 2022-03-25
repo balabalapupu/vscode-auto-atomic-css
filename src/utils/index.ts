@@ -80,6 +80,7 @@ export function createFix(
     new vscode.Position(sl, 0),
     new vscode.Position(el, 0)
   );
+  console.log(templateRange, "------");
   const currentPageTemplace = document.getText(templateRange);
   const htmlToAst: AstType[] = _HTML.parse(currentPageTemplace);
   htmlToAst.forEach((item: AstType, index: number) => {

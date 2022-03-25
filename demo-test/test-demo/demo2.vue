@@ -1,5 +1,5 @@
 <template>
-  <div class="demo-box">
+  <div class="demo-body">
     <div class="demo-div">
       <span class="demo-span">test-span1</span>
       <span>test-span2</span>
@@ -15,7 +15,6 @@
     width: 100%;
     font-size: 14px;
     display: flex;
-
     background-color: yellow;
     .demo-span {
       font-size: 12px;

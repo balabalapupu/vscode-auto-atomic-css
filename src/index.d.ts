@@ -18,9 +18,11 @@ type StyleType = {
   [propName: string]: string;
 };
 type StyleListType = {
-  [propName: string]: {
-    [propName: string]: string;
-  };
+  [propName: string]:
+    | string
+    | {
+        [propName: string]: string;
+      };
 };
 
 type AstType = {

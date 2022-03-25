@@ -1,3 +1,50 @@
+import { rejects } from "assert";
+
+/* eslint-disable curly */
+const path = require("path");
+const fs = require("fs-extra");
+const read = require("read-css");
+const less = require("less");
+const ATOMICPATH = path.resolve(__dirname, "../../");
+const dirRoot = ATOMICPATH + "/currentReadyCSS.css";
+
+async function handleCurrentFile(test: string) {
+  return await new Promise((resolve, reject) => {
+    less.render(test, (err: string, data: CSSTYPE) => {
+      if (fs.existsSync(dirRoot)) {
+        fs.unlinkSync(dirRoot);
+      }
+      fs.writeFile(dirRoot, data.css, (err: any) => {
+        if (err) return;
+        resolve("success");
+      });
+    });
+  });
+}
+function deepCreateCSSConfig(
+  targetObj: any,
+  index: number,
+  selectors: string[],
+  declaration: ReadCssStyleDeclarationsType[]
+) {
+  if (index === selectors.length) return;
+  const currentName = selectors[index];
+  if (!targetObj[currentName]) targetObj[currentName] = {};
+  if (index === selectors.length - 1) {
+    targetObj[currentName] = declaration.reduce((pre, val) => {
+      return {
+        ...pre,
+        [val.property]: val.value,
+      };
+    }, targetObj[currentName]);
+  }
+  deepCreateCSSConfig(
+    targetObj[currentName],
+    index + 1,
+    selectors,
+    declaration
+  );
+}
 /* eslint-disable curly */
 /**
  * Convert the current style sheet in string form into js-readable object form output,
@@ -5,29 +52,34 @@
  * @param resultText String format stylesheet for the current class in css
  * @returns
  */
-export function parseCurrentCSS({ resultText }: { resultText: string }): {
+export async function parseCurrentCSS({
+  resultText,
+}: {
+  resultText: string;
+}): Promise<{
   outputClassName: string;
   transOutputStyleObject: DeepObjectType;
-} {
-  const transJSONText = JSON.stringify(resultText)
-    .trim()
-    .split("\\n")
-    .join("")
-    .replace(/^"([^"]+)"$/, (match, p1) => p1)
-    .split(" ")
-    .join("");
-  const styleObject: DeepObjectType = JSON.parse(
-    `{${transJSONText
-      .replaceAll(";", ",")
-      .replaceAll("{", ":{")
-      .replaceAll(/([\.])([\w\-]+)([\:])/g, (m, a, b, c) => `"${a}${b}"${c}`)
-      .replaceAll(/([\{\,])([\w\-]+)([\:])/g, (m, a, b, c) => `${a}"${b}"${c}`)
-      .replaceAll(/([\:])([\w\-\%]+)([\,])/g, (m, a, b, c) => `${a}"${b}"${c}`)
-      .replaceAll(/(\")(\,)(\})/g, (m, a, b, c) => `${a}${c}`)}}`
-  );
+}> {
+  const res = await handleCurrentFile(resultText);
+  let outputClassName = "";
+  const returnObject: DeepObjectType = await new Promise((resolve, rejects) => {
+    read(dirRoot, (err: Error, data: ReadCssType) => {
+      const { stylesheet } = data;
+      const { rules } = stylesheet;
+      const resultObj: DeepObjectType = {};
+      rules.forEach((item) => {
+        const { declarations, selectors } = item;
+        const _selectors = selectors[0].split(" ");
+        outputClassName = _selectors[0];
+        let _reusltObj: DeepObjectType = resultObj;
+        deepCreateCSSConfig(_reusltObj, 0, _selectors, declarations);
+      });
+      resolve(resultObj);
+    });
+  });
   return {
-    outputClassName: Reflect.ownKeys(styleObject)[0] as string,
-    transOutputStyleObject: styleObject,
+    outputClassName: outputClassName,
+    transOutputStyleObject: returnObject,
   };
 }
 
@@ -48,7 +100,7 @@ export function translateCurrentCSS({
 }): TransferCSSDataByCommonCssConfigType {
   const transferCSSDataByCommonCssConfig: TransferCSSDataByCommonCssConfigType =
     {
-      fixedClassName: [name],
+      fixedClassName: [name.split(".")[1]],
       notFixedCss: {},
       children: {},
     };

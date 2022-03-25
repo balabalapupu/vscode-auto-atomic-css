@@ -60,9 +60,11 @@ export class AutoAtomicCss implements vscode.CodeActionProvider {
       document,
       range
     );
-    const { outputClassName, transOutputStyleObject } = parseCurrentCSS({
+
+    const { outputClassName, transOutputStyleObject } = await parseCurrentCSS({
       resultText: classInStyleText,
     });
+
     const convertedCssStyle: ConvertedCssStyleType = {};
     Reflect.ownKeys(transOutputStyleObject).forEach((item) => {
       if (typeof item !== "string") return;
