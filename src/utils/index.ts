@@ -3,6 +3,8 @@ import * as vscode from "vscode";
 const _HTML = require("html-parse-stringify");
 const fs = require("fs");
 
+import { handleHTMLtoAST } from "./html-ast-func";
+
 /**
  * Determine whether the current focus range is a class name,
  * and if the current editor focus has been determined, this will continue program
@@ -55,11 +57,6 @@ export function createFix(
   convertedCssStyle: ConvertedCssStyleType,
   edit: vscode.WorkspaceEdit
 ): vscode.WorkspaceEdit {
-  const targetMainClass = Reflect.ownKeys(convertedCssStyle)[0] as string;
-  const targetMainAttribute = convertedCssStyle[targetMainClass];
-
-  const find = false;
-  const line = 0;
   let sl = 0,
     el = document.lineCount;
   while (sl <= el) {
@@ -80,52 +77,7 @@ export function createFix(
     new vscode.Position(sl, 0),
     new vscode.Position(el, 0)
   );
-  const currentPageTemplace = document.getText(templateRange);
-  const htmlToAst: AstType[] = _HTML.parse(currentPageTemplace);
-  htmlToAst.forEach((item: AstType, index: number) => {
-    if (item.type !== "tag") return;
-    handleChangeHtmlAst(htmlToAst[index], targetMainAttribute, targetMainClass);
-  });
-  const astToString = _HTML.stringify(htmlToAst);
-  edit.replace(document.uri, templateRange, astToString);
+  const currentPageTemplace: string = document.getText(templateRange);
+  handleHTMLtoAST(edit, { currentPageTemplace, convertedCssStyle }, document);
   return edit;
-}
-
-function handleChangeHtmlAst(
-  ast: AstType,
-  currentStyleLayerAttribute: TransferCSSDataByCommonCssConfigType,
-  cssName: string
-) {
-  if (ast.children) {
-    ast.children.forEach((item, index) => {
-      if (item.type !== "tag") return;
-      handleChangeHtmlAst(
-        ast.children[index],
-        currentStyleLayerAttribute,
-        cssName
-      );
-    });
-  }
-  if (ast.attrs && ast.attrs.class) {
-    const astClassList = ast.attrs.class.split(" ");
-    const _cssName = cssName.split(".")[1];
-    const _index = astClassList.indexOf(_cssName);
-    if (_index > -1) {
-      astClassList[_index] =
-        currentStyleLayerAttribute.fixedClassName.join(" ");
-      ast.attrs.class = astClassList.join(" ");
-      Reflect.ownKeys(currentStyleLayerAttribute.children).forEach((item) => {
-        if (typeof item !== "string") return;
-        ast.children &&
-          ast.children.forEach((_item, index: number) => {
-            if (_item.type !== "tag") return;
-            handleChangeHtmlAst(
-              ast.children[index],
-              currentStyleLayerAttribute.children[item],
-              item
-            );
-          });
-      });
-    }
-  }
 }

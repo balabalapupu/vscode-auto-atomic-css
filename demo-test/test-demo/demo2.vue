@@ -1,7 +1,7 @@
 <template>
-  <div class="demo-body">
-    <div class="demo-div">
-      <span class="demo-span">test-span1</span>
+  <div class="demo-body w-full p-8 demo-body-other">
+    <div class="demo-div w-full fz-14 flexrow">
+      <span class="demo-span fz-12 m-h-8">test-span1</span>
       <span>test-span2</span>
     </div>
   </div>
@@ -12,13 +12,8 @@
 }
 .demo-body {
   .demo-div {
-    width: 100%;
-    font-size: 14px;
-    display: flex;
     background-color: yellow;
     .demo-span {
-      font-size: 12px;
-      margin-left: 8px;
     }
   }
 }

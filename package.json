@@ -34,6 +34,7 @@
     "@types/glob": "^7.2.0",
     "@types/mocha": "^9.1.0",
     "@types/node": "14.x",
+    "@types/parse5": "^6.0.3",
     "@types/vscode": "^1.65.0",
     "@typescript-eslint/eslint-plugin": "^5.12.1",
     "@typescript-eslint/parser": "^5.12.1",
@@ -49,6 +50,7 @@
     "get-css-data": "^2.0.2",
     "html-parse-stringify": "^3.0.1",
     "less": "^4.1.2",
+    "parse5": "^6.0.1",
     "read-css": "^0.3.0"
   }
 }
