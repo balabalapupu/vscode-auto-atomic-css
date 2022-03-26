@@ -56,6 +56,7 @@ export class AutoAtomicCss implements vscode.CodeActionProvider {
   ): Promise<vscode.CodeAction[] | undefined> {
     if (!isAtStartOfSmiley(document, range)) return;
     const commonStyleList = await getCommonStyle(entryPath);
+
     const { classInStyleText, classInStyleRange } = getClassInStyle(
       document,
       range
