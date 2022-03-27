@@ -3,7 +3,7 @@ import * as vscode from "vscode";
 const _HTML = require("html-parse-stringify");
 const fs = require("fs");
 
-import { handleHTMLtoAST } from "./html-ast-func";
+import { handleHTMLBuParse5 } from "./html-ast-func";
 
 /**
  * Determine whether the current focus range is a class name,
@@ -78,6 +78,10 @@ export function createFix(
     new vscode.Position(el, 0)
   );
   const currentPageTemplace: string = document.getText(templateRange);
-  handleHTMLtoAST(edit, { currentPageTemplace, convertedCssStyle }, document);
+  handleHTMLBuParse5(
+    edit,
+    { currentPageTemplace, convertedCssStyle },
+    document
+  );
   return edit;
 }

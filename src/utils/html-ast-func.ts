@@ -2,24 +2,44 @@
 import * as vscode from "vscode";
 import { Document, parse } from "parse5";
 
-interface ASTInputType {
+interface ASTType {
   currentPageTemplace: string;
   convertedCssStyle: ConvertedCssStyleType;
 }
-export function handleHTMLtoAST<T extends ASTInputType>(
+/**
+ * We use parse5 to convert html and generate ast structure, we need to use the class positioning in this ast structure
+ * @param edit vscode editor
+ * @param param1 currentPageTemplace is the content in the intercepted template tag,
+ *  the convertedCssStyle is the converted css object
+ * @param document VScode context
+ */
+export function handleHTMLBuParse5<T extends ASTType>(
   edit: vscode.WorkspaceEdit,
   { currentPageTemplace, convertedCssStyle }: T,
   document: vscode.TextDocument
 ) {
-  const targetMainClass = Reflect.ownKeys(convertedCssStyle)[0] as string;
-  const targetMainAttribute = convertedCssStyle[targetMainClass];
   const text: Document = parse(currentPageTemplace, {
     sourceCodeLocationInfo: true,
   });
-  loopAST(edit, text.childNodes[0], convertedCssStyle, document);
+  deepSearchASTFindAttribute(
+    edit,
+    text.childNodes[0],
+    convertedCssStyle,
+    document
+  );
 }
 
-function loopAST(
+/**
+ * determine if the class in the current hierarchy is the class we want to modify,
+ * if so, process this hierarchy.
+ * In addition, no matter whether the class is hit or not, we have to keep recursing the ast structure to find the next level
+ * where we can do some pruning optimization
+ * @param edit vscode editor
+ * @param currentNode AST childNode
+ * @param convertedCssStyle the converted css object
+ * @param document VScode context
+ */
+function deepSearchASTFindAttribute(
   edit: vscode.WorkspaceEdit,
   currentNode: any,
   convertedCssStyle: ConvertedCssStyleType,
@@ -49,18 +69,21 @@ function loopAST(
   if (currentNode.childNodes.length > 0) {
     currentNode.childNodes.forEach((node: any) => {
       if (node.nodeName === "#text") return;
-      loopAST(edit, node, convertedCssStyle, document);
+      deepSearchASTFindAttribute(edit, node, convertedCssStyle, document);
     });
   } else if (currentNode.content) {
     const childNodes = currentNode.content.childNodes;
     childNodes.forEach((node: any) => {
       if (node.nodeName === "#text") return;
-      loopAST(edit, node, convertedCssStyle, document);
+      deepSearchASTFindAttribute(edit, node, convertedCssStyle, document);
     });
   }
 }
 
-// 把当前 html 结构取出，现将当前层级提取出来改成正确的 class ，然后在递归下去
+/**
+ * take out the current html structure,
+ * now extract the current level and change it to the correct class, and then go down recursively
+ */
 function transferClassAttribute(
   edit: vscode.WorkspaceEdit,
   currentNode: any,
@@ -92,13 +115,23 @@ function transferClassAttribute(
   if (currentNode.childNodes.length > 0) {
     currentNode.childNodes.forEach((node: any) => {
       if (node.nodeName === "#text") return;
-      loopAST(edit, node, currentStyleLayerAttribute.children, document);
+      deepSearchASTFindAttribute(
+        edit,
+        node,
+        currentStyleLayerAttribute.children,
+        document
+      );
     });
   } else if (currentNode.content) {
     const childNodes = currentNode.content.childNodes;
     childNodes.forEach((node: any) => {
       if (node.nodeName === "#text") return;
-      loopAST(edit, node, currentStyleLayerAttribute.children, document);
+      deepSearchASTFindAttribute(
+        edit,
+        node,
+        currentStyleLayerAttribute.children,
+        document
+      );
     });
   }
 }
