@@ -6,6 +6,11 @@
   "engines": {
     "vscode": "^1.65.0"
   },
+  "publisher": "wangtianyou",
+  "repository": {
+    "type": "git",
+    "url": "https://https://github.com/balabalapupu/vscode-auto-atomic-css"
+  },
   "categories": [
     "Other"
   ],
