@@ -1,23 +1,15 @@
 <template>
   <div
-    class=".body-test text-align-center flexcol-v-center flex-justify-v-center w-full fz-12"
+    class="main-use-class w-full h-full m-h-8 m-h-8 flexrow flex-start-v-center flex-justify-v-center"
   >
-    <div class=".demo_box w-full" />
-    <div class=".demo_box w-full" />
-    <div class="demo-test">131231</div>
-    <div>
-      <p>
-        <span> <span class=".demo_box w-full w-full" /> </span>
-      </p>
-    </div>
+    <div class="demo_box m-8" />
+    <div class="demo_box m-8" />
+    <div class="demo-box2">box2</div>
   </div>
 </template>
 <style lang="less" scoped>
-.body-test {
+.main-use-class {
   .demo_box {
-    .mo {
-      width: 1px;
-    }
   }
 }
 
