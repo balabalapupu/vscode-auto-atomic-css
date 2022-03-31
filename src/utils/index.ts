@@ -3,8 +3,6 @@ import * as vscode from "vscode";
 const _HTML = require("html-parse-stringify");
 const fs = require("fs");
 
-import { handleHTMLBuParse5 } from "./html-ast-func";
-
 /**
  * Determine whether the current focus range is a class name,
  * and if the current editor focus has been determined, this will continue program
@@ -52,36 +50,36 @@ export function getClassInStyle(
   };
 }
 
-export function createFix(
-  document: vscode.TextDocument,
-  convertedCssStyle: ConvertedCssStyleType,
-  edit: vscode.WorkspaceEdit
-): vscode.WorkspaceEdit {
-  let sl = 0,
-    el = document.lineCount;
-  while (sl <= el) {
-    const curLineText = document.lineAt(sl);
-    if (curLineText.text.includes("<template")) {
-      break;
-    }
-    sl++;
-  }
-  while (el >= sl) {
-    const curLineText = document.lineAt(el - 1);
-    if (curLineText.text.includes("</template")) {
-      break;
-    }
-    el--;
-  }
-  const templateRange = new vscode.Range(
-    new vscode.Position(sl, 0),
-    new vscode.Position(el, 0)
-  );
-  const currentPageTemplace: string = document.getText(templateRange);
-  handleHTMLBuParse5(
-    edit,
-    { currentPageTemplace, convertedCssStyle },
-    document
-  );
-  return edit;
-}
+// export function createFix(
+//   document: vscode.TextDocument,
+//   convertedCssStyle: ConvertedCssStyleType,
+//   edit: vscode.WorkspaceEdit
+// ): vscode.WorkspaceEdit {
+//   let sl = 0,
+//     el = document.lineCount;
+//   while (sl <= el) {
+//     const curLineText = document.lineAt(sl);
+//     if (curLineText.text.includes("<template")) {
+//       break;
+//     }
+//     sl++;
+//   }
+//   while (el >= sl) {
+//     const curLineText = document.lineAt(el - 1);
+//     if (curLineText.text.includes("</template")) {
+//       break;
+//     }
+//     el--;
+//   }
+//   const templateRange = new vscode.Range(
+//     new vscode.Position(sl, 0),
+//     new vscode.Position(el, 0)
+//   );
+//   const currentPageTemplace: string = document.getText(templateRange);
+//   handleHTMLBuParse5(
+//     edit,
+//     { currentPageTemplace, convertedCssStyle },
+//     document
+//   );
+//   return edit;
+// }

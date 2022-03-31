@@ -1,0 +1,39 @@
+.fz-12 {
+    font-size: 12px;
+  }
+  .fz-14 {
+    font-size: 14px;
+  }
+  .fz-16 {
+    font-size: 16px;
+  }
+  
+  .text-align-center {
+    text-align: center;
+  }
+  .w-full {
+    width: 100%;
+  }
+  .flex {
+    display: flex;
+  }
+  .justify-content-center {
+    justify-content: center;
+  }
+  .justify-content-between {
+    justify-content: space-between;
+  }
+  .align-items-center {
+    align-items: center;
+  }
+  .ml-8 {
+    margin-left: 8px;
+  }
+  .block {
+    display: block;
+  }
+  .m-h-8{
+    margin-left: 8px;
+    margin-right: 8px;
+  }
+  

@@ -4,11 +4,12 @@ const path = require("path");
 import * as vscode from "vscode";
 import getCommonStyle from "./utils/common-style";
 import {
-  parseCurrentCSS,
-  translateCurrentCSS,
   generateCurrentCSS,
+  parseCurrentCSStoObject,
+  generateOutputCSSStyle,
 } from "./utils/css-ast-func";
-import { isAtStartOfSmiley, getClassInStyle, createFix } from "./utils/index";
+import { isAtStartOfSmiley, getClassInStyle } from "./utils/index";
+import { createHtmlFixedStyle } from "./utils/html-ast-func";
 
 let entryPath = "";
 
@@ -54,49 +55,69 @@ export class AutoAtomicCss implements vscode.CodeActionProvider {
     document: vscode.TextDocument,
     range: vscode.Range
   ): Promise<vscode.CodeAction[] | undefined> {
-    if (!isAtStartOfSmiley(document, range)) return;
-    const commonStyleList = await getCommonStyle(entryPath);
+    if (!isAtStartOfSmiley(document, range) || entryPath === "") return;
 
+    // 从入口文件获取 stylehub样式
+
+    const styleRes = await getCommonStyle(entryPath);
+    if (styleRes === "error") return;
+    const { singleStyleTypeStore: commonStyleList, multiStyleTypeStore } =
+      styleRes;
     const { classInStyleText, classInStyleRange } = getClassInStyle(
       document,
       range
     );
 
-    const { outputClassName, transOutputStyleObject } = await parseCurrentCSS({
-      resultText: classInStyleText,
-    });
+    // 转换本地样式
+    const { mainClassName, translatedStyleObject } =
+      await parseCurrentCSStoObject(classInStyleText);
 
     const convertedCssStyle: ConvertedCssStyleType = {};
-    Reflect.ownKeys(transOutputStyleObject).forEach((item) => {
-      if (typeof item !== "string") return;
-      const transferedData = translateCurrentCSS({
-        name: item,
-        config: transOutputStyleObject[item],
-        commonStyleList,
-      });
-      convertedCssStyle[item] = transferedData;
-    });
-    let generatorString = "";
-    Reflect.ownKeys(convertedCssStyle).forEach((item) => {
-      if (typeof item !== "string") return;
-      const v = generateCurrentCSS({
-        currentLayer: convertedCssStyle[item],
-        name: item,
-      });
-      generatorString = generatorString.concat(v);
-    });
-    const edit = new vscode.WorkspaceEdit();
-    edit.replace(document.uri, classInStyleRange, generatorString);
-    const replaceWithSFixedStyle: vscode.WorkspaceEdit = createFix(
-      document,
-      convertedCssStyle,
-      edit
+
+    const originOutPutCSSStyle: GenerateOutPutCSSStyle = {
+      fixedClassName: [],
+      notFixedCSS: {},
+      children: {},
+    };
+
+    // 通过单原子样式表与当前样式作对比，生成转换后的样式
+    const outputCSS = generateOutputCSSStyle(
+      translatedStyleObject,
+      commonStyleList,
+      originOutPutCSSStyle
     );
+
+    // 将转换后的样式转换为 vscode fixed 样式
+    const htmlEdit = new vscode.WorkspaceEdit();
+    const replacedTemplateClassandEdit: vscode.WorkspaceEdit =
+      createHtmlFixedStyle(htmlEdit, document, outputCSS, mainClassName);
+
+    console.log(
+      replacedTemplateClassandEdit,
+      "---replacedTemplateClassandEdit---"
+    );
+
+    // let generatorString = "";
+    // Reflect.ownKeys(convertedCssStyle).forEach((item) => {
+    //   if (typeof item !== "string") return;
+    //   const v = generateCurrentCSS({
+    //     currentLayer: convertedCssStyle[item],
+    //     name: item,
+    //   });
+    //   generatorString = generatorString.concat(v);
+    // });
+    // const edit = new vscode.WorkspaceEdit();
+    // edit.replace(document.uri, classInStyleRange, generatorString);
+    // const replaceWithSFixedStyle: vscode.WorkspaceEdit = createFix(
+    //   document,
+    //   convertedCssStyle,
+    //   edit
+    // );
     const fix = new vscode.CodeAction(
-      `the class ${outputClassName} can convert to atomic css`,
+      `the class can convert to atomic css`,
       vscode.CodeActionKind.QuickFix
     );
-    fix.edit = replaceWithSFixedStyle;
+    fix.edit = replacedTemplateClassandEdit;
     return [fix];
   }
 }

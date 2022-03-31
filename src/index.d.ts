@@ -102,3 +102,24 @@ type TransferCSSDataByCommonCssConfigType = {
     [propsname: string]: TransferCSSDataByCommonCssConfigType;
   };
 };
+interface GenerateOutPutCSSStyle {
+  fixedClassName: string[];
+  notFixedCSS: {
+    [propsname: string]: string;
+  };
+  children: {
+    [propsname: string]: GenerateOutPutCSSStyle;
+  };
+}
+type MultiStyleTypeStoreType = Map<string[], string>;
+
+interface TransOutputStyleObjectInterface {
+  children: {
+    [propsname: string]: TransOutputStyleObjectInterface;
+  };
+  style: ObjectType;
+}
+
+interface GenerateHtmlInterface {
+  [propsname: string]: GenerateOutPutCSSStyle;
+}

@@ -1,4 +1,6 @@
 /* eslint-disable curly */
+
+import * as vscode from "vscode";
 const path = require("path");
 const fs = require("fs-extra");
 const less = require("less");
@@ -12,17 +14,44 @@ const ATOMICPATH = path.resolve(__dirname, "../../");
  * and then return it into ast format through read-css.
  * @returns Promise<DeepObjectType> the DeepObjectType is a css ast construct
  */
-export default async function getCommonStyle(
-  entry: string
-): Promise<DeepObjectType> {
+export default async function getCommonStyle(entry: string): Promise<
+  | {
+      singleStyleTypeStore: DeepObjectType;
+      multiStyleTypeStore: MultiStyleTypeStoreType;
+    }
+  | "error"
+> {
   return await new Promise(async (resolve, reject) => {
-    await getReversedCSS(entry);
-    const dirRoot = ATOMICPATH + TARGETPATH;
-    read(dirRoot, (err: Error, data: ReadCssType) => {
-      const res: DeepObjectType = handleCallback(data);
-      if (err) reject(err);
-      resolve(res);
-    });
+    const fileType = entry.split(".").slice(-1)[0];
+    switch (fileType) {
+      // less 文件转译
+      case "less":
+        await getReversedCSS(entry);
+        const dirRoot = ATOMICPATH + TARGETPATH;
+        read(dirRoot, (err: Error, data: ReadCssType) => {
+          const { singleStyleTypeStore, multiStyleTypeStore } =
+            handleCallback(data);
+          if (err) reject(err);
+          resolve({ singleStyleTypeStore, multiStyleTypeStore });
+        });
+        break;
+      // css 直接处理
+      case "css":
+        read(entry, (err: Error, data: ReadCssType) => {
+          const { singleStyleTypeStore, multiStyleTypeStore } =
+            handleCallback(data);
+          if (err) reject(err);
+          resolve({ singleStyleTypeStore, multiStyleTypeStore });
+        });
+        break;
+
+      default:
+        vscode.window.showInformationMessage(
+          `auto-atomic-css not support atomic file type: ${fileType}`
+        );
+        resolve("error");
+        break;
+    }
   });
 }
 
@@ -31,24 +60,40 @@ export default async function getCommonStyle(
  * we also use the declarations params to generate a resvered constructure
  * @returns a resvered constructure that the property values are before their class names
  */
-function handleCallback(data: ReadCssType): DeepObjectType {
-  const styleStore: DeepObjectType = {};
-  if (!data.stylesheet) return styleStore;
+function handleCallback(data: ReadCssType): {
+  singleStyleTypeStore: DeepObjectType;
+  multiStyleTypeStore: MultiStyleTypeStoreType;
+} {
+  const singleStyleTypeStore: DeepObjectType = {};
+  const multiStyleTypeStore: MultiStyleTypeStoreType = new Map();
+  if (!data.stylesheet) return { singleStyleTypeStore, multiStyleTypeStore };
   data.stylesheet.rules.forEach((item: ReadCssStyleRuleType) => {
     const { declarations, selectors } = item;
-    declarations.forEach((_item: ReadCssStyleDeclarationsType) => {
-      if (_item.type !== "declaration") return;
-      const { property, value } = _item;
-      if (styleStore[property]) {
-        styleStore[property][value] = selectors[0].split(".")[1];
+    // 单属性读取逻辑 给css用
+    if (declarations.length === 1) {
+      const _singleHub: ReadCssStyleDeclarationsType = declarations[0];
+      if (_singleHub.type !== "declaration") return;
+      const { property, value } = _singleHub;
+      if (singleStyleTypeStore[property]) {
+        singleStyleTypeStore[property][value] = selectors[0].split(".")[1];
       } else {
-        styleStore[property] = {
+        singleStyleTypeStore[property] = {
           [value]: selectors[0].split(".")[1],
         };
       }
-    });
+      // 多属性读取逻辑，给 html 用
+    } else {
+      const key = declarations.reduce(
+        (pre: string[], val: ReadCssStyleDeclarationsType) => {
+          return [...pre, val.property];
+        },
+        []
+      );
+      const value = selectors[0].split(".")[1];
+      multiStyleTypeStore.set(key, value);
+    }
   });
-  return styleStore;
+  return { singleStyleTypeStore, multiStyleTypeStore };
 }
 
 /**

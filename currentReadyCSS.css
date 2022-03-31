@@ -1,0 +1,30 @@
+.main-use-class {
+  width: 100%;
+  font-size: 12px;
+  height: 100%;
+  margin-top: 8px;
+  margin-bottom: 12px;
+  display: flex;
+  color: #0a70f5;
+  border: 1px solid #0a70f5;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.main-use-class .demo_box {
+  width: 100%;
+  margin: 8px;
+  border: 1px solid #0a70f5;
+  background-color: #f5f5f5;
+  padding: 0px 20px 0px 20px;
+}
+.main-use-class .demo_box .sub_demo_box {
+  color: red;
+}
+.main-use-class .demo_box2 {
+  width: 100%;
+  margin: 8px;
+  border: 1px solid #0a70f5;
+  background-color: #f5f5f5;
+  padding: 0px 20px 0px 20px;
+}

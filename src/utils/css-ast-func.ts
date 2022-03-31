@@ -1,4 +1,4 @@
-import { rejects } from "assert";
+import { handleTransCompoundtoSingle } from "../transfer/index";
 
 /* eslint-disable curly */
 const path = require("path");
@@ -8,78 +8,114 @@ const less = require("less");
 const ATOMICPATH = path.resolve(__dirname, "../../");
 const dirRoot = ATOMICPATH + "/currentReadyCSS.css";
 
-async function handleCurrentFile(test: string) {
+async function handleCurrentFile(test: string, _dirRoot: string) {
   return await new Promise((resolve, reject) => {
     less.render(test, (err: string, data: CSSTYPE) => {
-      if (fs.existsSync(dirRoot)) {
-        fs.unlinkSync(dirRoot);
+      if (fs.existsSync(_dirRoot)) {
+        fs.unlinkSync(_dirRoot);
       }
-      fs.writeFile(dirRoot, data.css, (err: any) => {
+      fs.writeFile(_dirRoot, data.css, (err: any) => {
         if (err) return;
         resolve("success");
       });
     });
   });
 }
-function deepCreateCSSConfig(
-  targetObj: any,
-  index: number,
-  selectors: string[],
-  declaration: ReadCssStyleDeclarationsType[]
-) {
-  if (index === selectors.length) return;
-  const currentName = selectors[index];
-  if (!targetObj[currentName]) targetObj[currentName] = {};
-  if (index === selectors.length - 1) {
-    targetObj[currentName] = declaration.reduce((pre, val) => {
-      return {
-        ...pre,
-        [val.property]: val.value,
-      };
-    }, targetObj[currentName]);
-  }
-  deepCreateCSSConfig(
-    targetObj[currentName],
-    index + 1,
-    selectors,
-    declaration
-  );
-}
-/* eslint-disable curly */
-/**
- * Convert the current style sheet in string form into js-readable object form output,
- * which is convenient for subsequent style processing.
- * @param resultText String format stylesheet for the current class in css
- * @returns
- */
-export async function parseCurrentCSS({
-  resultText,
-}: {
-  resultText: string;
-}): Promise<{
-  outputClassName: string;
-  transOutputStyleObject: DeepObjectType;
+
+export async function parseCurrentCSStoObject(resultText: string): Promise<{
+  mainClassName: string;
+  translatedStyleObject: TransOutputStyleObjectInterface;
 }> {
-  const res = await handleCurrentFile(resultText);
-  let outputClassName = "";
-  const returnObject: DeepObjectType = await new Promise((resolve, rejects) => {
+  await handleCurrentFile(resultText, dirRoot);
+  const transOutputStyleObject: TransOutputStyleObjectInterface = {
+    children: {},
+    style: {},
+  };
+  return await new Promise((resolve, rejects) => {
     read(dirRoot, (err: Error, data: ReadCssType) => {
       const { stylesheet } = data;
       const { rules } = stylesheet;
-      const resultObj: DeepObjectType = {};
-      rules.forEach((item) => {
-        const { declarations, selectors } = item;
-        const _selectors = selectors[0].split(" ");
-        outputClassName = _selectors[0];
-        let _reusltObj: DeepObjectType = resultObj;
-        deepCreateCSSConfig(_reusltObj, 0, _selectors, declarations);
+      const { mainClassName, translatedStyleObject } = transCssRules(
+        transOutputStyleObject,
+        rules
+      );
+      resolve({
+        mainClassName,
+        translatedStyleObject,
       });
-      resolve(resultObj);
     });
   });
+}
+
+function transCssRules(
+  transOutputStyleObject: TransOutputStyleObjectInterface,
+  rules: ReadCssStyleRuleType[]
+): {
+  mainClassName: string;
+  translatedStyleObject: TransOutputStyleObjectInterface;
+} {
+  let _mainClass: string = "";
+  rules.forEach((item) => {
+    let _transOutputStyleObject: TransOutputStyleObjectInterface =
+      transOutputStyleObject;
+    const { declarations, selectors } = item;
+    const _className = selectors[0].split(" ");
+    const mainName = _className.slice(0, 1)[0];
+    _mainClass = mainName;
+    const childName = _className.slice(1);
+    childName.forEach((_name, _index) => {
+      // 处理嵌套层级
+      if (!_transOutputStyleObject.children) {
+        _transOutputStyleObject.children = {
+          [_name]: {
+            children: {},
+            style: {},
+          },
+        };
+        _transOutputStyleObject.style = {};
+
+        _transOutputStyleObject = _transOutputStyleObject.children[_name];
+      } else if (_transOutputStyleObject.children[_name]) {
+        _transOutputStyleObject = _transOutputStyleObject.children[_name];
+      } else {
+        _transOutputStyleObject.children[_name] = {
+          children: {},
+          style: {},
+        };
+        _transOutputStyleObject = _transOutputStyleObject.children[_name];
+      }
+      // 处理子 style 样式
+      if (_index === childName.length - 1) {
+        declarations.forEach((_dItem) => {
+          const { property, value } = _dItem;
+          const transSingleStyle: StyleType = handleTransCompoundtoSingle(
+            property,
+            value
+          );
+          _transOutputStyleObject.style = {
+            ..._transOutputStyleObject.style,
+            ...transSingleStyle,
+          };
+        });
+      }
+    });
+  });
+  // 处理父样式
+  const { declarations } = rules[0];
+  declarations.forEach((item) => {
+    const { property, value } = item;
+    const transSingleStyle: StyleType = handleTransCompoundtoSingle(
+      property,
+      value
+    );
+    transOutputStyleObject.style = {
+      ...transOutputStyleObject.style,
+      ...transSingleStyle,
+    };
+  });
   return {
-    outputClassName: outputClassName,
-    transOutputStyleObject: returnObject,
+    mainClassName: _mainClass,
+    translatedStyleObject: transOutputStyleObject,
   };
 }
 
@@ -131,11 +167,65 @@ export function translateCurrentCSS({
   return transferCSSDataByCommonCssConfig;
 }
 
-/**
- * Convert the css stylesheet of the current ast structure to string form to ready for fix errors
- * @param param0
- * @returns TransferCSSDataByCommonCssConfigType and name
- */
+export function generateOutputCSSStyle(
+  translatedStyleObject: TransOutputStyleObjectInterface,
+  commonStyleList: DeepObjectType,
+  originOutPutCSSStyle: GenerateOutPutCSSStyle
+): GenerateOutPutCSSStyle {
+  const { fixedList, notFixedCSSList } = handleGenerateOutputCSSStyle(
+    commonStyleList,
+    translatedStyleObject.style
+  );
+  originOutPutCSSStyle.fixedClassName = fixedList;
+  originOutPutCSSStyle.notFixedCSS = notFixedCSSList;
+  originOutPutCSSStyle.children = {};
+  Reflect.ownKeys(translatedStyleObject.children).forEach((item) => {
+    if (typeof item !== "string") return;
+    const currentLayerStyle: TransOutputStyleObjectInterface =
+      translatedStyleObject.children[item];
+    originOutPutCSSStyle.children[item] = {} as GenerateOutPutCSSStyle;
+    const _originOutPutCSSStyle = originOutPutCSSStyle.children[item];
+    generateOutputCSSStyle(
+      currentLayerStyle,
+      commonStyleList,
+      _originOutPutCSSStyle
+    );
+  });
+  return originOutPutCSSStyle;
+}
+
+function handleGenerateOutputCSSStyle(
+  commonStyleList: DeepObjectType,
+  styleList: ObjectType
+): {
+  fixedList: string[];
+  notFixedCSSList: ObjectType;
+} {
+  const fixedList: string[] = [];
+  const notFixedCSSList: ObjectType = {};
+  Object.keys(styleList).forEach((item) => {
+    const value = styleList[item];
+    if (commonStyleList[item]) {
+      const commonList = Reflect.ownKeys(commonStyleList[item]) as string[];
+      const commonIndex = commonList.findIndex(
+        (_item) => _item.toLowerCase() === value.toLowerCase()
+      );
+      if (commonIndex !== -1) {
+        const commonClass = commonStyleList[item][commonList[commonIndex]];
+        fixedList.push(commonClass);
+      } else {
+        notFixedCSSList[item] = styleList[item];
+      }
+    } else {
+      notFixedCSSList[item] = styleList[item];
+    }
+  });
+  return {
+    fixedList,
+    notFixedCSSList,
+  };
+}
+
 export function generateCurrentCSS({
   currentLayer,
   name,
