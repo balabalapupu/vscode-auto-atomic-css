@@ -97,6 +97,8 @@ export class AutoAtomicCss implements vscode.CodeActionProvider {
       "---replacedTemplateClassandEdit---"
     );
 
+    // warning！ 这里还需要重新处理 style 样式，待做
+
     // let generatorString = "";
     // Reflect.ownKeys(convertedCssStyle).forEach((item) => {
     //   if (typeof item !== "string") return;
