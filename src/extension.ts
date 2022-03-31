@@ -98,23 +98,6 @@ export class AutoAtomicCss implements vscode.CodeActionProvider {
     );
 
     // warning！ 这里还需要重新处理 style 样式，待做
-
-    // let generatorString = "";
-    // Reflect.ownKeys(convertedCssStyle).forEach((item) => {
-    //   if (typeof item !== "string") return;
-    //   const v = generateCurrentCSS({
-    //     currentLayer: convertedCssStyle[item],
-    //     name: item,
-    //   });
-    //   generatorString = generatorString.concat(v);
-    // });
-    // const edit = new vscode.WorkspaceEdit();
-    // edit.replace(document.uri, classInStyleRange, generatorString);
-    // const replaceWithSFixedStyle: vscode.WorkspaceEdit = createFix(
-    //   document,
-    //   convertedCssStyle,
-    //   edit
-    // );
     const fix = new vscode.CodeAction(
       `the class can convert to atomic css`,
       vscode.CodeActionKind.QuickFix
