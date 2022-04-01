@@ -1,6 +1,6 @@
 {
-  "name": "auto-atomic-css",
-  "displayName": "auto-atomic-css",
+  "name": "vue-auto-atomic-css",
+  "displayName": "vue-auto-atomic-css",
   "description": "",
   "version": "1.0.0",
   "engines": {
@@ -15,15 +15,15 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:auto-atomic-doing",
+    "onCommand:vue-auto-atomic-css",
     "onLanguage:vue"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "auto-atomic-doing",
-        "title": "auto atomic css do"
+        "command": "vue-auto-atomic-css",
+        "title": "vue-auto-atomic-css"
       }
     ]
   },

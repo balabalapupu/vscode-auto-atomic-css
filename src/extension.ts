@@ -4,7 +4,6 @@ const path = require("path");
 import * as vscode from "vscode";
 import getCommonStyle from "./utils/common-style";
 import {
-  generateCurrentCSS,
   parseCurrentCSStoObject,
   generateOutputCSSStyle,
 } from "./utils/css-ast-func";
@@ -22,10 +21,10 @@ export async function activate(context: vscode.ExtensionContext) {
     }
   );
   const disposable = vscode.commands.registerCommand(
-    "auto-atomic-doing",
+    "vue-auto-atomic-css",
     () => {
       // Display a message box to the user
-      vscode.window.showInformationMessage("auto-atomic-css start!");
+      vscode.window.showInformationMessage("Vue Auto Atomic CSS Start!!!");
       vscode.window
         .showOpenDialog({
           // 可选对象
@@ -54,13 +53,14 @@ export class AutoAtomicCss implements vscode.CodeActionProvider {
   async provideCodeActions(
     document: vscode.TextDocument,
     range: vscode.Range
-  ): Promise<vscode.CodeAction[] | undefined> {
-    if (!isAtStartOfSmiley(document, range) || entryPath === "") return;
-
+  ): Promise<vscode.CodeAction[]> {
+    let fix: vscode.CodeAction;
+    if (!isAtStartOfSmiley(document, range) || entryPath === "") {
+      return [];
+    }
     // 从入口文件获取 stylehub样式
-
     const styleRes = await getCommonStyle(entryPath);
-    if (styleRes === "error") return;
+    if (styleRes === "error") return [];
     const { singleStyleTypeStore: commonStyleList, multiStyleTypeStore } =
       styleRes;
     const { classInStyleText, classInStyleRange } = getClassInStyle(
@@ -69,40 +69,24 @@ export class AutoAtomicCss implements vscode.CodeActionProvider {
     );
 
     // 转换本地样式
-    const { mainClassName, translatedStyleObject } =
-      await parseCurrentCSStoObject(classInStyleText);
-
-    const convertedCssStyle: ConvertedCssStyleType = {};
-
-    const originOutPutCSSStyle: GenerateOutPutCSSStyle = {
-      fixedClassName: [],
-      notFixedCSS: {},
-      children: {},
-    };
+    const transferRes = await parseCurrentCSStoObject(classInStyleText);
 
     // 通过单原子样式表与当前样式作对比，生成转换后的样式
-    const outputCSS = generateOutputCSSStyle(
-      translatedStyleObject,
-      commonStyleList,
-      originOutPutCSSStyle
-    );
+    const outputCSS = generateOutputCSSStyle(commonStyleList, transferRes);
 
     // 将转换后的样式转换为 vscode fixed 样式
     const htmlEdit = new vscode.WorkspaceEdit();
     const replacedTemplateClassandEdit: vscode.WorkspaceEdit =
-      createHtmlFixedStyle(htmlEdit, document, outputCSS, mainClassName);
+      createHtmlFixedStyle(htmlEdit, document, outputCSS);
 
-    console.log(
-      replacedTemplateClassandEdit,
-      "---replacedTemplateClassandEdit---"
-    );
-
-    // warning！ 这里还需要重新处理 style 样式，待做
-    const fix = new vscode.CodeAction(
-      `the class can convert to atomic css`,
+    replacedTemplateClassandEdit.replace(document.uri, classInStyleRange, "");
+    fix = new vscode.CodeAction(
+      `Auto Atomic CSS Start!`,
       vscode.CodeActionKind.QuickFix
     );
+
     fix.edit = replacedTemplateClassandEdit;
+
     return [fix];
   }
 }

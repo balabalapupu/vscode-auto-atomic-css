@@ -1,7 +1,6 @@
 /* eslint-disable curly */
 import * as vscode from "vscode";
 import {
-  ChildNode,
   Document,
   DocumentFragment,
   Element,
@@ -10,32 +9,32 @@ import {
   parse,
 } from "parse5";
 
-type TransferHTMLTextType = DocumentFragment | ChildNode;
+interface ChildHTMLNodeInterface {
+  childNodes: ChildHTMLNodeInterface[];
+  nodeName: string;
+  sourceCodeLocation: ElementLocation | undefined;
+  parentClassTree: string[];
+  class?: string;
+  style?: string;
+}
 
 export function createHtmlFixedStyle(
   htmlEdit: vscode.WorkspaceEdit,
   document: vscode.TextDocument,
-  outputCSS: GenerateOutPutCSSStyle,
-  mainClassName: string
+  outputCSS: GenerateOutputCssStyleType
 ) {
   const currentPageTemplace: string = handleFindScoreOfTemplate(document);
   const text: Document = htmlParseOption(currentPageTemplace);
-  const transferHtmlText: DocumentFragment | undefined = htmlTransterOption(
+
+  const transferHtmlText: ChildHTMLNodeInterface = htmlTransterOption(
     text.childNodes[0]
   );
   if (!transferHtmlText) return htmlEdit;
-  htmlGenerateOption(
-    document,
-    transferHtmlText,
-    {
-      [mainClassName]: outputCSS,
-    },
-    htmlEdit
-  );
+
+  htmlGenerateOptionBeta(document, htmlEdit, transferHtmlText, outputCSS);
 
   return htmlEdit;
 }
-
 function handleFindScoreOfTemplate(document: vscode.TextDocument): string {
   let sl = 0,
     el = document.lineCount;
@@ -66,7 +65,7 @@ function htmlParseOption(currentPageTemplace: string) {
   });
 }
 
-function htmlTransterOption(text: any): DocumentFragment | undefined {
+function htmlTransterOption(text: any): ChildHTMLNodeInterface {
   let loop = [text];
   let current: DocumentFragment | undefined = undefined;
   while (loop.length > 0) {
@@ -84,121 +83,125 @@ function htmlTransterOption(text: any): DocumentFragment | undefined {
         loop.push(item);
       });
   }
-  return current;
+  const resultHtmlText = revertHtmlOption(current, []);
+  return resultHtmlText;
 }
-/**
- * warning！ 递归类，这个函数有问题，需要把递归类转换成 [father-class, current-class] 格式再遍历
- * @param document
- * @param transferHtmlText
- * @param currentCSSlayer
- * @param htmlEdit
- * @returns
- */
-function htmlGenerateOption<
-  V extends vscode.TextDocument,
-  T extends TransferHTMLTextType,
-  U extends GenerateHtmlInterface,
-  P extends vscode.WorkspaceEdit
->(document: V, transferHtmlText: T, currentCSSlayer: U, htmlEdit: P): void {
-  if (transferHtmlText.nodeName === "#text") return;
 
-  console.log(transferHtmlText, "------", currentCSSlayer);
-
-  // 先确定 attrs 中有没有 class 属性，如果有在具体判断
-  // warning！ 就是这个位置去遍历 css 选择器，待做并需要拆分
-  if ("attrs" in transferHtmlText) {
-    const currentNodeClass = transferHtmlText.attrs.find(
-      (item: any) => item.name === "class"
-    );
-    if (currentNodeClass) {
-      const currentNodeClassList = currentNodeClass.value.split(" ");
-      const outputClassList = Object.keys(currentCSSlayer).filter(
-        (item) => item.split(".").length > 1
-      );
-      outputClassList.forEach((item) => {
-        const _item = item.split(".")[1];
-        // 根据类名判断
-        if (currentNodeClassList.includes(_item)) {
-          const currentStyleLayerAttribute = currentCSSlayer[item];
-          // 找到需要修改的类了，进行修改 class 属性和 style 属性
-          handleClassandStyleOption(
-            document,
-            transferHtmlText,
-            currentStyleLayerAttribute,
-            currentNodeClassList,
-            htmlEdit
-          );
-
-          // 改完更改需要递归的类，继续递归下去
-          const nextCSSlayer = currentStyleLayerAttribute.children;
-          handleLoopChildNodes(
-            document,
-            transferHtmlText,
-            nextCSSlayer,
-            htmlEdit
-          );
-        }
-      });
-    }
+function revertHtmlOption(currentHTML: any, classTree: string[]) {
+  const { nodeName, sourceCodeLocation } = currentHTML as Element;
+  let newHtmlText: ChildHTMLNodeInterface = {
+    childNodes: [],
+    nodeName: nodeName,
+    sourceCodeLocation: sourceCodeLocation,
+    parentClassTree: [],
+  };
+  const currentClassTree = JSON.parse(JSON.stringify(classTree));
+  let checkCurrentClassCheck = "";
+  if (currentHTML.attrs && currentHTML.attrs.length > 0) {
+    const attrsList: ObjectType = {};
+    currentHTML.attrs.forEach((item: { name: string; value: any }) => {
+      attrsList[item.name] = item.value;
+      if (item.name === "class") {
+        checkCurrentClassCheck = item.value;
+      }
+    });
+    newHtmlText = {
+      ...newHtmlText,
+      ...attrsList,
+    };
   }
-  handleLoopChildNodes(document, transferHtmlText, currentCSSlayer, htmlEdit);
+  currentClassTree.push(checkCurrentClassCheck);
+  newHtmlText.parentClassTree = currentClassTree;
+  currentHTML.childNodes &&
+    currentHTML.childNodes.forEach((item: any) => {
+      if (item.nodeName === "#text") return;
+      if (item.nodeName === "template") {
+        const { content } = item as unknown as { content: any };
+        const childSource = revertHtmlOption(content, currentClassTree);
+        newHtmlText.childNodes.push(childSource);
+      } else {
+        const _item = item as Element;
+        const childSource = revertHtmlOption(_item, currentClassTree);
+        newHtmlText.childNodes.push(childSource);
+      }
+    });
+  return newHtmlText;
 }
 
-/**
- *  warning！ 处理当前 tag 的 class 和 style 需要拆分成允许插槽插入的格式
- * @param document
- * @param transferHtmlText
- * @param currentStyleLayerAttribute
- * @param currentNodeClassList
- * @param htmlEdit
- */
-function handleClassandStyleOption<
+function htmlGenerateOptionBeta<
   V extends vscode.TextDocument,
-  T extends Element,
-  U extends GenerateOutPutCSSStyle,
+  T extends ChildHTMLNodeInterface,
+  U extends GenerateOutputCssStyleType,
   P extends vscode.WorkspaceEdit
->(
-  document: V, // 当前文档
-  transferHtmlText: T, // parse5 解析出来的节点
-  currentStyleLayerAttribute: U, // 需要修改的转换后的 css 格式
-  currentNodeClassList: string[], // 原始 class 列表
-  htmlEdit: P
+>(document: V, htmlEdit: P, transferHtmlText: T, outputCSS: U): P {
+  if (transferHtmlText.nodeName === "#text") return htmlEdit;
+  if (transferHtmlText.class && transferHtmlText.class !== "") {
+    const { parentClassTree } = transferHtmlText;
+    const currentNodeClassList = transferHtmlText.class.split(" ");
+
+    const targetStyleMap: GenerateOutputCssStyleType = handleTargetClassStyle(
+      currentNodeClassList,
+      outputCSS,
+      parentClassTree.slice(0, -1)
+    );
+    handletargetStyle(document, htmlEdit, targetStyleMap, transferHtmlText);
+  }
+
+  handleLoopChildNodes(document, transferHtmlText, outputCSS, htmlEdit);
+
+  return htmlEdit;
+}
+
+function handletargetStyle(
+  document: vscode.TextDocument,
+  htmlEdit: vscode.WorkspaceEdit,
+  targetStyleMap: GenerateOutputCssStyleType,
+  transferHtmlText: ChildHTMLNodeInterface
 ) {
-  // 1. 修改 class 属性
-  if (currentStyleLayerAttribute.fixedClassName.length > 0) {
-    const classScope = transferHtmlText.sourceCodeLocation?.attrs?.class;
-    // 输出当前 字符串 和 范围
-    const { classString, classRange } = handleFindScoreFromOffset(
-      document,
-      classScope,
-      transferHtmlText
-    );
-    const set = new Set([
-      ...currentNodeClassList,
-      ...currentStyleLayerAttribute.fixedClassName,
-    ]);
-    const newClassList = Array.from(set);
-    const newClass = `class="${newClassList.join(" ")}"`;
-    htmlEdit.replace(document.uri, classRange, newClass);
-  }
+  if ([...targetStyleMap.keys()].length === 0) return;
+  const outputList: GenerateOutputCssStyleInterface = {
+    fixedList: [],
+    notFixedCSSList: {},
+  };
+  targetStyleMap.forEach((item) => {
+    outputList.fixedList.push(...item.fixedList);
+    outputList.notFixedCSSList = {
+      ...outputList.notFixedCSSList,
+      ...item.notFixedCSSList,
+    };
+  });
 
-  // 2. 修改 style 属性
-  if (Object.keys(currentStyleLayerAttribute.notFixedCSS).length > 0) {
+  // 1. 改造 class
+  const classScope = transferHtmlText.sourceCodeLocation?.attrs?.class;
+  // 输出当前 字符串 和 范围
+  const { classRange } = handleFindScoreFromOffset(
+    document,
+    classScope,
+    transferHtmlText
+  );
+  const originClassList = transferHtmlText.class
+    ? transferHtmlText.class.split(" ")
+    : [];
+  const set = new Set([...originClassList, ...outputList.fixedList]);
+  const newClassList = Array.from(set);
+  const newClass = `class="${newClassList.join(" ")}"`;
+  htmlEdit.replace(document.uri, classRange, newClass);
+
+  // 2. 改造 style
+  if (Object.keys(outputList.notFixedCSSList).length > 0) {
     const styleScope = transferHtmlText.sourceCodeLocation?.attrs?.style;
-    // 输出当前 字符串 和 范围
     const { classString: styleString, classRange: styleRange } =
       handleFindScoreFromOffset(document, styleScope, transferHtmlText);
-    const originStyle = transferHtmlText.attrs.find(
-      (item) => item.name === "style"
-    );
-    let originStyleList = originStyle ? originStyle.value.split(";") : [];
+    let originStyleList = transferHtmlText.style
+      ? transferHtmlText.style.split(";")
+      : [];
     originStyleList.map((item) => item.trim());
-    const notFixedStyleList = Object.keys(
-      currentStyleLayerAttribute.notFixedCSS
-    ).map((item) => {
-      const value = currentStyleLayerAttribute.notFixedCSS[item];
-      return `${item}: ${value}`;
-    });
+    const notFixedStyleList = Object.keys(outputList.notFixedCSSList).map(
+      (item) => {
+        const value = outputList.notFixedCSSList[item];
+        return `${item}: ${value}`;
+      }
+    );
     const set = new Set([...originStyleList, ...notFixedStyleList]);
     const newStyleList = Array.from(set);
     const newStyle =
@@ -209,10 +212,48 @@ function handleClassandStyleOption<
   }
 }
 
+function handleTargetClassStyle(
+  currentNodeClassList: string[],
+  outputCSS: GenerateOutputCssStyleType,
+  parentClass: string[]
+): GenerateOutputCssStyleType {
+  // 获取 CSS map 中的 key
+  const outputCSSMapKeys = [...outputCSS.keys()];
+  // 准备输出的 CSS map： 存储可以用的样式
+  const targetClassMap: GenerateOutputCssStyleType = new Map();
+
+  outputCSSMapKeys.forEach((item: string[]) => {
+    const targetClass = item[0];
+    if (currentNodeClassList.includes(targetClass)) {
+      const check = isTreeNode(item.slice(1), parentClass);
+      if (check) {
+        const targetStyle = outputCSS.get(item);
+        targetStyle && targetClassMap.set(item, targetStyle);
+      }
+    }
+  });
+
+  return targetClassMap;
+}
+
+function isTreeNode(
+  targetClassList: string[],
+  parentClassTree: string[]
+): boolean {
+  const _targetTree = JSON.parse(JSON.stringify(targetClassList));
+  parentClassTree.forEach((item) => {
+    const itemList = item.split(" ");
+    if (itemList.includes(_targetTree[0])) {
+      _targetTree.shift();
+    }
+  });
+  return _targetTree.length === 0;
+}
+
 function handleFindScoreFromOffset(
   document: vscode.TextDocument,
   classScope: Location | undefined,
-  transferHtmlText: Element
+  transferHtmlText: ChildHTMLNodeInterface
 ): {
   classString: string;
   classRange: vscode.Range;
@@ -244,21 +285,11 @@ function handleFindScoreFromOffset(
 
 function handleLoopChildNodes<
   V extends vscode.TextDocument,
-  T extends TransferHTMLTextType,
-  U extends GenerateHtmlInterface,
+  T extends ChildHTMLNodeInterface,
+  U extends GenerateOutputCssStyleType,
   P extends vscode.WorkspaceEdit
->(document: V, transferHtmlText: T, cssLayer: U, htmlEdit: P) {
-  // 判断节点是否有 childNodes 有就根据 childNodes 递归
-  if (
-    "childNodes" in transferHtmlText &&
-    transferHtmlText.childNodes.length > 0
-  ) {
-    transferHtmlText.childNodes.forEach((item: ChildNode) => {
-      htmlGenerateOption(document, item, cssLayer, htmlEdit);
-    });
-  } else if ("content" in transferHtmlText) {
-    // 如果没有 childNodes 就根据 content 递归
-    const content: DocumentFragment = transferHtmlText.content;
-    htmlGenerateOption(document, content, cssLayer, htmlEdit);
-  }
+>(document: V, transferHtmlText: T, outputCSS: U, htmlEdit: P) {
+  transferHtmlText.childNodes.forEach((item: ChildHTMLNodeInterface) => {
+    htmlGenerateOptionBeta(document, htmlEdit, item, outputCSS);
+  });
 }

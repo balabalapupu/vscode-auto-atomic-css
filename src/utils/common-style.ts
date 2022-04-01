@@ -123,6 +123,7 @@ function getReversedCSS(entry: string) {
     );
   });
 }
+
 function handleDeleteFile(target: string[] | string) {
   if (!Array.isArray(target)) {
     const currentFile = ATOMICPATH + "/" + target;

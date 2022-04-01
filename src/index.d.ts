@@ -123,3 +123,14 @@ interface TransOutputStyleObjectInterface {
 interface GenerateHtmlInterface {
   [propsname: string]: GenerateOutPutCSSStyle;
 }
+interface GenerateOutputCssStyleInterface {
+  fixedList: string[];
+  notFixedCSSList: {
+    [key: string]: string;
+  };
+}
+
+type GenerateOutputCssStyleType = Map<
+  string[],
+  GenerateOutputCssStyleInterface
+>;
