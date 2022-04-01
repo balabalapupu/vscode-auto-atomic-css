@@ -1,12 +1,20 @@
 {
   "name": "vue-auto-atomic-css",
-  "displayName": "vue-auto-atomic-css",
-  "description": "",
-  "version": "1.0.0",
+  "version": "0.0.1",
+  "publisher": "wangtianyou",
   "engines": {
     "vscode": "^1.65.0"
   },
-  "publisher": "wangtianyou",
+  "icon": "autoCSS.png",
+  "displayName": "Vue Auto Atomic CSS",
+  "description": "Vue 项目中使用自动化的 CSS 文件",
+  "keywords": [
+    "vue atomic css",
+    "vue auto css",
+    "auto atomic css",
+    "atomic css",
+    "auto-atomic-css"
+  ],
   "repository": {
     "type": "git",
     "url": "https://https://github.com/balabalapupu/vscode-auto-atomic-css"
@@ -23,7 +31,7 @@
     "commands": [
       {
         "command": "vue-auto-atomic-css",
-        "title": "vue-auto-atomic-css"
+        "title": "使用 Vue Auto Atomic CSS 自动原子化样式"
       }
     ]
   },

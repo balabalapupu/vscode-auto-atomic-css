@@ -81,7 +81,7 @@ export class AutoAtomicCss implements vscode.CodeActionProvider {
 
     replacedTemplateClassandEdit.replace(document.uri, classInStyleRange, "");
     fix = new vscode.CodeAction(
-      `Auto Atomic CSS Start!`,
+      `此类型可以自动原子化`,
       vscode.CodeActionKind.QuickFix
     );
 

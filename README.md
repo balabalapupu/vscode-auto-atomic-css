@@ -13,8 +13,6 @@ Convert the selected class’s style in the style tag into the attribute corresp
 
 1. If the selected class is wrapped by other classes, the outer wrapping range will be ignored
    - Maybe I won't fix this to prevent users from existing outside wrapper classes
-2. If the inner layer uses non-class selectors such as pseudo-classes and pseudo-elements, an accident will occur.
-   - This issue will be resolved in 1.0.1 around April.
 
 ## Release Notes
 
