@@ -129,28 +129,6 @@ export function generateOutputCSSStyle(
     });
   });
   return newMap;
-
-  // const { fixedList, notFixedCSSList } = handleGenerateOutputCSSStyle(
-  //   commonStyleList,
-  //   translatedStyleObject.style
-  // );
-  // originOutPutCSSStyle.fixedClassName = fixedList;
-  // originOutPutCSSStyle.notFixedCSS = notFixedCSSList;
-  // originOutPutCSSStyle.children = {};
-  // Reflect.ownKeys(translatedStyleObject.children).forEach((item) => {
-  //   if (typeof item !== "string") return;
-  //   const currentLayerStyle: TransOutputStyleObjectInterface =
-  //     translatedStyleObject.children[item];
-  //   originOutPutCSSStyle.children[item] = {} as GenerateOutPutCSSStyle;
-  //   const _originOutPutCSSStyle = originOutPutCSSStyle.children[item];
-  //   generateOutputCSSStyle(
-  //     currentLayerStyle,
-  //     commonStyleList,
-  //     _originOutPutCSSStyle,
-  //     transferRes
-  //   );
-  // });
-  // return originOutPutCSSStyle;
 }
 
 function handleGenerateOutputCSSStyle(
@@ -162,6 +140,7 @@ function handleGenerateOutputCSSStyle(
 } {
   const fixedList: string[] = [];
   const notFixedCSSList: ObjectType = {};
+
   Object.keys(styleList).forEach((item) => {
     const value = styleList[item];
     if (commonStyleList[item]) {

@@ -25,6 +25,9 @@ export function handleTransCompoundtoSingle(
     case "padding":
       returnValue = handleMarginorPaddingStyle(property, value);
       break;
+    case "border-radius":
+      returnValue = handleBorderRadiusStyle(property, value);
+      break;
     default:
       returnValue = {
         [property]: value,
@@ -124,6 +127,49 @@ export function handleMarginorPaddingStyle(
         [`${property}-right`]: r4,
         [`${property}-bottom`]: b4,
         [`${property}-left`]: l4,
+      };
+  }
+}
+
+function handleBorderRadiusStyle(property: string, value: string) {
+  const borderRadius = value.split(" ");
+  switch (borderRadius.length) {
+    case 1:
+      return {
+        [property]: value,
+      };
+    case 2:
+      const [tl2br, tr2bl] = [borderRadius[0], borderRadius[1]];
+      return {
+        [`${property}-top-left-radius`]: tl2br,
+        [`${property}-top-right-radius`]: tr2bl,
+        [`${property}-bottom-left-radius`]: tr2bl,
+        [`${property}-bottom-right-radius`]: tl2br,
+      };
+    case 3:
+      const [tl, tr2bl3, br] = [
+        borderRadius[0],
+        borderRadius[1],
+        borderRadius[2],
+      ];
+      return {
+        [`${property}-top-left-radius`]: tl,
+        [`${property}-top-right-radius`]: tr2bl3,
+        [`${property}-bottom-left-radius`]: tr2bl3,
+        [`${property}-bottom-right-radius`]: br,
+      };
+    default:
+      const [t4, r4, b4, l4] = [
+        borderRadius[0],
+        borderRadius[1],
+        borderRadius[2],
+        borderRadius[3],
+      ];
+      return {
+        [`${property}-top-left-radius`]: t4,
+        [`${property}-top-right-radius`]: r4,
+        [`${property}-bottom-left-radius`]: b4,
+        [`${property}-bottom-right-radius`]: l4,
       };
   }
 }
