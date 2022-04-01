@@ -1,15 +1,12 @@
 <template>
-  <div
-    class="main-use-class"
-    style="padding: 23px; right: 12; border-color: #0a70f5; top: 0; left: 0"
-  >
+  <div class="main-use-class">
     <template>
-      <div class="demo_box">3123123</div>
+      <div class="demo_box useless-case2 demo_box2">3123123</div>
     </template>
     <div class="demo_box">
-      <div class="demo-box2">2222</div>
+      <div class="demo_box2">2222</div>
     </div>
-    <div class="demo-box2">box2</div>
+    <div class="demo_box2">box2</div>
     <div class="sub_demo_box">sub_box</div>
   </div>
 </template>

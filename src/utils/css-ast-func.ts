@@ -22,101 +22,46 @@ async function handleCurrentFile(test: string, _dirRoot: string) {
   });
 }
 
-export async function parseCurrentCSStoObject(resultText: string): Promise<{
-  mainClassName: string;
-  translatedStyleObject: TransOutputStyleObjectInterface;
-}> {
+export async function parseCurrentCSStoObject(
+  resultText: string
+): Promise<Map<string[], ObjectType>> {
   await handleCurrentFile(resultText, dirRoot);
-  const transOutputStyleObject: TransOutputStyleObjectInterface = {
-    children: {},
-    style: {},
-  };
   return await new Promise((resolve, rejects) => {
     read(dirRoot, (err: Error, data: ReadCssType) => {
       const { stylesheet } = data;
       const { rules } = stylesheet;
-      const { mainClassName, translatedStyleObject } = transCssRules(
-        transOutputStyleObject,
-        rules
-      );
-      resolve({
-        mainClassName,
-        translatedStyleObject,
-      });
+      const transferRes = handleTransferCSSRules(rules, new Map());
+      resolve(transferRes);
     });
   });
 }
 
-function transCssRules(
-  transOutputStyleObject: TransOutputStyleObjectInterface,
-  rules: ReadCssStyleRuleType[]
-): {
-  mainClassName: string;
-  translatedStyleObject: TransOutputStyleObjectInterface;
-} {
-  let _mainClass: string = "";
-  rules.forEach((item) => {
-    let _transOutputStyleObject: TransOutputStyleObjectInterface =
-      transOutputStyleObject;
+function handleTransferCSSRules(
+  rules: ReadCssStyleRuleType[],
+  map: Map<string[], ObjectType>
+) {
+  rules.forEach((item: ReadCssStyleRuleType) => {
     const { declarations, selectors } = item;
-    const _className = selectors[0].split(" ");
-    const mainName = _className.slice(0, 1)[0];
-    _mainClass = mainName;
-    const childName = _className.slice(1);
-    childName.forEach((_name, _index) => {
-      // 处理嵌套层级
-      if (!_transOutputStyleObject.children) {
-        _transOutputStyleObject.children = {
-          [_name]: {
-            children: {},
-            style: {},
-          },
-        };
-        _transOutputStyleObject.style = {};
-
-        _transOutputStyleObject = _transOutputStyleObject.children[_name];
-      } else if (_transOutputStyleObject.children[_name]) {
-        _transOutputStyleObject = _transOutputStyleObject.children[_name];
-      } else {
-        _transOutputStyleObject.children[_name] = {
-          children: {},
-          style: {},
-        };
-        _transOutputStyleObject = _transOutputStyleObject.children[_name];
-      }
-      // 处理子 style 样式
-      if (_index === childName.length - 1) {
-        declarations.forEach((_dItem) => {
-          const { property, value } = _dItem;
-          const transSingleStyle: StyleType = handleTransCompoundtoSingle(
-            property,
-            value
-          );
-          _transOutputStyleObject.style = {
-            ..._transOutputStyleObject.style,
-            ...transSingleStyle,
-          };
-        });
-      }
+    let currentDeclarations = {};
+    const currentClassList = selectors[0]
+      .split(".")
+      .map((item) => item.trim())
+      .reverse()
+      .filter((item) => item !== "");
+    declarations.forEach((_dItem: { property: string; value: string }) => {
+      const { property, value } = _dItem;
+      const transSingleStyle: StyleType = handleTransCompoundtoSingle(
+        property,
+        value
+      );
+      currentDeclarations = {
+        ...currentDeclarations,
+        ...transSingleStyle,
+      };
+      map.set(currentClassList, currentDeclarations);
     });
   });
-  // 处理父样式
-  const { declarations } = rules[0];
-  declarations.forEach((item) => {
-    const { property, value } = item;
-    const transSingleStyle: StyleType = handleTransCompoundtoSingle(
-      property,
-      value
-    );
-    transOutputStyleObject.style = {
-      ...transOutputStyleObject.style,
-      ...transSingleStyle,
-    };
-  });
-  return {
-    mainClassName: _mainClass,
-    translatedStyleObject: transOutputStyleObject,
-  };
+  return map;
 }
 
 /**
@@ -168,30 +113,44 @@ export function translateCurrentCSS({
 }
 
 export function generateOutputCSSStyle(
-  translatedStyleObject: TransOutputStyleObjectInterface,
   commonStyleList: DeepObjectType,
-  originOutPutCSSStyle: GenerateOutPutCSSStyle
-): GenerateOutPutCSSStyle {
-  const { fixedList, notFixedCSSList } = handleGenerateOutputCSSStyle(
-    commonStyleList,
-    translatedStyleObject.style
-  );
-  originOutPutCSSStyle.fixedClassName = fixedList;
-  originOutPutCSSStyle.notFixedCSS = notFixedCSSList;
-  originOutPutCSSStyle.children = {};
-  Reflect.ownKeys(translatedStyleObject.children).forEach((item) => {
-    if (typeof item !== "string") return;
-    const currentLayerStyle: TransOutputStyleObjectInterface =
-      translatedStyleObject.children[item];
-    originOutPutCSSStyle.children[item] = {} as GenerateOutPutCSSStyle;
-    const _originOutPutCSSStyle = originOutPutCSSStyle.children[item];
-    generateOutputCSSStyle(
-      currentLayerStyle,
+  transferRes: Map<string[], ObjectType>
+): GenerateOutputCssStyleType {
+  const newMap: GenerateOutputCssStyleType = new Map();
+  [...transferRes.entries()].forEach((item) => {
+    const [key, value] = item;
+    const { fixedList, notFixedCSSList } = handleGenerateOutputCSSStyle(
       commonStyleList,
-      _originOutPutCSSStyle
+      value
     );
+    newMap.set(key, {
+      fixedList: fixedList,
+      notFixedCSSList: notFixedCSSList,
+    });
   });
-  return originOutPutCSSStyle;
+  return newMap;
+
+  // const { fixedList, notFixedCSSList } = handleGenerateOutputCSSStyle(
+  //   commonStyleList,
+  //   translatedStyleObject.style
+  // );
+  // originOutPutCSSStyle.fixedClassName = fixedList;
+  // originOutPutCSSStyle.notFixedCSS = notFixedCSSList;
+  // originOutPutCSSStyle.children = {};
+  // Reflect.ownKeys(translatedStyleObject.children).forEach((item) => {
+  //   if (typeof item !== "string") return;
+  //   const currentLayerStyle: TransOutputStyleObjectInterface =
+  //     translatedStyleObject.children[item];
+  //   originOutPutCSSStyle.children[item] = {} as GenerateOutPutCSSStyle;
+  //   const _originOutPutCSSStyle = originOutPutCSSStyle.children[item];
+  //   generateOutputCSSStyle(
+  //     currentLayerStyle,
+  //     commonStyleList,
+  //     _originOutPutCSSStyle,
+  //     transferRes
+  //   );
+  // });
+  // return originOutPutCSSStyle;
 }
 
 function handleGenerateOutputCSSStyle(
