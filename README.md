@@ -8,6 +8,11 @@ Atomic style sheets can be written through LESS and CSS.
 
 The first step of the plugin is to determine the location of the atomic style sheets, and then click the class you want to fix in the style tag.
 
+<image src="./r1.png" />
+<image src="./r2.png" />
+<image src="./r3.png" />
+<image src="./r4.png" />
+
 ## Features
 
 <image src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/8bce24ddf07344aabfd84f72bcb3524e~tplv-k3u1fbpfcp-zoom-1.image" width="70%" />
