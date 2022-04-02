@@ -9,11 +9,6 @@ const read = require("read-css");
 import { TARGETPATH } from "../constance/index";
 const ATOMICPATH = path.resolve(__dirname, "../../");
 
-/**
- * Read the less atomic css style sheet through less.render and convert it into css style sheet,
- * and then return it into ast format through read-css.
- * @returns Promise<IObjectStyleType> the IObjectStyleType is a css ast construct
- */
 export default async function getCommonStyle(entry: string): Promise<
   | {
       singleStyleTypeStore: IObjectStyleType;

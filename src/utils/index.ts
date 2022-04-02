@@ -2,7 +2,7 @@
 import * as vscode from "vscode";
 const _HTML = require("html-parse-stringify");
 const fs = require("fs");
-
+const path = require("path");
 /**
  * Determine whether the current focus range is a class name,
  * and if the current editor focus has been determined, this will continue program
@@ -48,4 +48,25 @@ export function getClassInStyle(
     classInStyleText: document.getText(newRange),
     classInStyleRange: newRange,
   };
+}
+
+export function isExist(
+  entryPath: string,
+  pathFolder: string,
+  isStylehubLager: boolean
+) {
+  if (!isStylehubLager) {
+    return entryPath === "" ? false : true;
+  }
+  const targetPath = path.join(
+    pathFolder,
+    "/node_modules/@datafe/stylehub/lib/stylehub.css"
+  );
+  if (fs.existsSync(targetPath)) {
+    return true;
+  }
+  vscode.window.showWarningMessage(
+    "你装 stylhub 了嘛，还是打开的文件夹不是项目的根路径"
+  );
+  return false;
 }
