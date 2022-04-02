@@ -13,8 +13,8 @@ import {
 export function handleTransCompoundtoSingle(
   property: string,
   value: string
-): StyleType {
-  let returnValue: StyleType = {};
+): IStyleType {
+  let returnValue: IStyleType = {};
   switch (property) {
     case "border":
       returnValue = handleBorderStyle(property, value);
@@ -41,7 +41,7 @@ export function handleTransCompoundtoSingle(
 // /* width | style */ border: 2px dotted;
 // /* style | color */ border: outset #f33;
 // /* width | style | color */ border: medium dashed green;
-export function handleBorderStyle(property: string, value: string): StyleType {
+export function handleBorderStyle(property: string, value: string): IStyleType {
   const borderStyle = value.split(" ");
   switch (borderStyle.length) {
     case 1:
@@ -92,7 +92,7 @@ export function handleBorderStyle(property: string, value: string): StyleType {
 export function handleMarginorPaddingStyle(
   property: string,
   value: string
-): StyleType {
+): IStyleType {
   const marginStyle = value.split(" ");
   switch (marginStyle.length) {
     case 1:

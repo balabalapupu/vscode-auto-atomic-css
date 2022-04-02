@@ -1,64 +1,16 @@
 declare module "espree" {
   function parse(a: string): string;
 }
-type outputCss = {
-  fixedClassName: string;
-  notFixedCss: {
-    [propName: string]: string;
-  };
-  children: {
-    [propName: string]: outputCss;
-  };
-};
 
-type ConvertedCssType = {
-  [propName: string]: outputCss;
-};
-type StyleType = {
-  [propName: string]: string;
-};
-type StyleListType = {
-  [propName: string]:
-    | string
-    | {
-        [propName: string]: string;
-      };
-};
-
-type AstType = {
-  attrs: {
-    [propName: string]: string;
-  };
-  type: string;
-  name: string;
-  voidElement: boolean;
-  children: AstType[];
-};
-
-type ObjectType = {
+type IStyleType = {
   [propName: string]: string;
 };
 
-type AnalyzedClassLabelType = {
-  fixedClassName: string;
-  notFixedCss: {
-    [propName: string]: string;
-  };
-  children: {
-    [propName: string]: AnalyzedClassLabelType;
-  };
-};
-type DeepObjectType = {
-  [propName: string]: {
-    [propName: string]: string;
-  };
+type IObjectStyleType = {
+  [propName: string]: IStyleType;
 };
 type DFSObjectType = {
-  [propName: string]:
-    | string
-    | {
-        [propName: string]: string;
-      };
+  [propName: string]: string | IStyleType;
 };
 
 type CSSTYPE = {
@@ -74,9 +26,7 @@ type ReadCssStyleDeclarationsType = {
 };
 type ReadCssStyleRuleType = {
   declarations: ReadCssStyleDeclarationsType[];
-  position: {
-    [propsName: string]: string;
-  };
+  position: IStyleType;
   selectors: string[];
   type: string;
 };
@@ -90,39 +40,14 @@ type ReadCssType = {
   stylesheet: ReadCssStyleSheetType;
 };
 
-type ConvertedCssStyleType = {
-  [propName: string]: TransferCSSDataByCommonCssConfigType;
-};
-type TransferCSSDataByCommonCssConfigType = {
-  fixedClassName: string[];
-  notFixedCss: {
-    [propsname: string]: string;
-  };
-  children: {
-    [propsname: string]: TransferCSSDataByCommonCssConfigType;
-  };
-};
-interface GenerateOutPutCSSStyle {
-  fixedClassName: string[];
-  notFixedCSS: {
-    [propsname: string]: string;
-  };
-  children: {
-    [propsname: string]: GenerateOutPutCSSStyle;
-  };
-}
 type MultiStyleTypeStoreType = Map<string[], string>;
-
 interface TransOutputStyleObjectInterface {
   children: {
     [propsname: string]: TransOutputStyleObjectInterface;
   };
-  style: ObjectType;
+  style: IStyleType;
 }
 
-interface GenerateHtmlInterface {
-  [propsname: string]: GenerateOutPutCSSStyle;
-}
 interface GenerateOutputCssStyleInterface {
   fixedList: string[];
   notFixedCSSList: {
@@ -134,3 +59,12 @@ type GenerateOutputCssStyleType = Map<
   string[],
   GenerateOutputCssStyleInterface
 >;
+
+interface DEditIntereface {
+  range: unknown;
+  text: string;
+}
+interface TEditInterface {
+  classEdit: DEditIntereface[];
+  styleEdit: DEditIntereface[];
+}

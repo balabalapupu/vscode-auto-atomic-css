@@ -1,6 +1,4 @@
 /* eslint-disable curly */
-const fs = require("fs");
-const path = require("path");
 import * as vscode from "vscode";
 import getCommonStyle from "./utils/common-style";
 import {
@@ -73,20 +71,45 @@ export class AutoAtomicCss implements vscode.CodeActionProvider {
 
     // 通过单原子样式表与当前样式作对比，生成转换后的样式
     const outputCSS = generateOutputCSSStyle(commonStyleList, transferRes);
-
     // 将转换后的样式转换为 vscode fixed 样式
-    const htmlEdit = new vscode.WorkspaceEdit();
-    const replacedTemplateClassandEdit: vscode.WorkspaceEdit =
-      createHtmlFixedStyle(htmlEdit, document, outputCSS);
-
-    replacedTemplateClassandEdit.replace(document.uri, classInStyleRange, "");
-    fix = new vscode.CodeAction(
-      `此类型可以自动原子化`,
-      vscode.CodeActionKind.QuickFix
+    const editTemplate: TEditInterface = createHtmlFixedStyle(
+      document,
+      outputCSS,
+      {
+        classEdit: [],
+        styleEdit: [],
+      }
     );
 
-    fix.edit = replacedTemplateClassandEdit;
+    // 只转换 class
+    const onlyFixedClassEdit = new vscode.WorkspaceEdit();
+    editTemplate.classEdit.map((item) => {
+      const range = item.range as vscode.Range;
+      onlyFixedClassEdit.replace(document.uri, range, item.text);
+    });
+    const fixOnlyClass = new vscode.CodeAction(
+      `convert to atomic class`,
+      vscode.CodeActionKind.QuickFix
+    );
+    fixOnlyClass.edit = onlyFixedClassEdit;
 
-    return [fix];
+    // 全量转换
+    const fixedClassandStyleEdit = new vscode.WorkspaceEdit();
+    editTemplate.classEdit.map((item) => {
+      const range = item.range as vscode.Range;
+      fixedClassandStyleEdit.replace(document.uri, range, item.text);
+    });
+    editTemplate.styleEdit.map((item) => {
+      const range = item.range as vscode.Range;
+      fixedClassandStyleEdit.replace(document.uri, range, item.text);
+    });
+    fixedClassandStyleEdit.replace(document.uri, classInStyleRange, "");
+    const fixed = new vscode.CodeAction(
+      `convert all atomic class and style`,
+      vscode.CodeActionKind.QuickFix
+    );
+    fixed.edit = fixedClassandStyleEdit;
+
+    return [fixOnlyClass, fixed];
   }
 }

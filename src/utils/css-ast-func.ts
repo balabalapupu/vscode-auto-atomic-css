@@ -24,7 +24,7 @@ async function handleCurrentFile(test: string, _dirRoot: string) {
 
 export async function parseCurrentCSStoObject(
   resultText: string
-): Promise<Map<string[], ObjectType>> {
+): Promise<Map<string[], IStyleType>> {
   await handleCurrentFile(resultText, dirRoot);
   return await new Promise((resolve, rejects) => {
     read(dirRoot, (err: Error, data: ReadCssType) => {
@@ -38,7 +38,7 @@ export async function parseCurrentCSStoObject(
 
 function handleTransferCSSRules(
   rules: ReadCssStyleRuleType[],
-  map: Map<string[], ObjectType>
+  map: Map<string[], IStyleType>
 ) {
   rules.forEach((item: ReadCssStyleRuleType) => {
     const { declarations, selectors } = item;
@@ -50,7 +50,7 @@ function handleTransferCSSRules(
       .filter((item) => item !== "");
     declarations.forEach((_dItem: { property: string; value: string }) => {
       const { property, value } = _dItem;
-      const transSingleStyle: StyleType = handleTransCompoundtoSingle(
+      const transSingleStyle: IStyleType = handleTransCompoundtoSingle(
         property,
         value
       );
@@ -64,57 +64,9 @@ function handleTransferCSSRules(
   return map;
 }
 
-/**
- * Convert the current css ast structure, because the style sheet has a nested relationship,
- * this function needs to distinguish whether the current value is a style attribute or the class name of the next level.
- * @param param0
- * @returns TransferCSSDataByCommonCssConfigType
- */
-export function translateCurrentCSS({
-  name,
-  config,
-  commonStyleList,
-}: {
-  name: string;
-  config: DFSObjectType;
-  commonStyleList: DeepObjectType;
-}): TransferCSSDataByCommonCssConfigType {
-  const transferCSSDataByCommonCssConfig: TransferCSSDataByCommonCssConfigType =
-    {
-      fixedClassName: [name.split(".")[1]],
-      notFixedCss: {},
-      children: {},
-    };
-  const currentLayerStyle = Reflect.ownKeys(config).filter(
-    (item) => !item.toString().includes(".")
-  ) as string[];
-  const nextLayerStyle = Reflect.ownKeys(config).filter((item) =>
-    item.toString().includes(".")
-  ) as string[];
-  currentLayerStyle.forEach((item: string) => {
-    const currentLayerStyleKey = config[item] as string;
-    if (commonStyleList[item] && commonStyleList[item][currentLayerStyleKey]) {
-      transferCSSDataByCommonCssConfig.fixedClassName.push(
-        commonStyleList[item][currentLayerStyleKey]
-      );
-    } else {
-      transferCSSDataByCommonCssConfig.notFixedCss[item] = currentLayerStyleKey;
-    }
-  });
-  nextLayerStyle.forEach((item: string) => {
-    const currentLayerStyleKey = config[item] as DFSObjectType;
-    transferCSSDataByCommonCssConfig.children[item] = translateCurrentCSS({
-      name: item,
-      config: currentLayerStyleKey,
-      commonStyleList,
-    });
-  });
-  return transferCSSDataByCommonCssConfig;
-}
-
 export function generateOutputCSSStyle(
-  commonStyleList: DeepObjectType,
-  transferRes: Map<string[], ObjectType>
+  commonStyleList: IObjectStyleType,
+  transferRes: Map<string[], IStyleType>
 ): GenerateOutputCssStyleType {
   const newMap: GenerateOutputCssStyleType = new Map();
   [...transferRes.entries()].forEach((item) => {
@@ -132,14 +84,14 @@ export function generateOutputCSSStyle(
 }
 
 function handleGenerateOutputCSSStyle(
-  commonStyleList: DeepObjectType,
-  styleList: ObjectType
+  commonStyleList: IObjectStyleType,
+  styleList: IStyleType
 ): {
   fixedList: string[];
-  notFixedCSSList: ObjectType;
+  notFixedCSSList: IStyleType;
 } {
   const fixedList: string[] = [];
-  const notFixedCSSList: ObjectType = {};
+  const notFixedCSSList: IStyleType = {};
 
   Object.keys(styleList).forEach((item) => {
     const value = styleList[item];
@@ -162,30 +114,4 @@ function handleGenerateOutputCSSStyle(
     fixedList,
     notFixedCSSList,
   };
-}
-
-export function generateCurrentCSS({
-  currentLayer,
-  name,
-}: {
-  currentLayer: TransferCSSDataByCommonCssConfigType;
-  name: string;
-}): string {
-  let resultName = `${name} {`;
-  Reflect.ownKeys(currentLayer.notFixedCss).forEach((_item) => {
-    if (typeof _item !== "string") return;
-    resultName = resultName.concat(
-      `\n${_item}: ${currentLayer.notFixedCss[_item]};`
-    );
-  });
-  Reflect.ownKeys(currentLayer.children).forEach((_item) => {
-    if (typeof _item !== "string") return;
-    const v = generateCurrentCSS({
-      currentLayer: currentLayer.children[_item],
-      name: _item,
-    });
-    resultName = resultName.concat(`\n${v}`);
-  });
-  resultName = resultName.concat("\n}");
-  return resultName;
 }
