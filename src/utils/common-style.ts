@@ -12,11 +12,11 @@ const ATOMICPATH = path.resolve(__dirname, "../../");
 /**
  * Read the less atomic css style sheet through less.render and convert it into css style sheet,
  * and then return it into ast format through read-css.
- * @returns Promise<DeepObjectType> the DeepObjectType is a css ast construct
+ * @returns Promise<IObjectStyleType> the IObjectStyleType is a css ast construct
  */
 export default async function getCommonStyle(entry: string): Promise<
   | {
-      singleStyleTypeStore: DeepObjectType;
+      singleStyleTypeStore: IObjectStyleType;
       multiStyleTypeStore: MultiStyleTypeStoreType;
     }
   | "error"
@@ -61,10 +61,10 @@ export default async function getCommonStyle(entry: string): Promise<
  * @returns a resvered constructure that the property values are before their class names
  */
 function handleCallback(data: ReadCssType): {
-  singleStyleTypeStore: DeepObjectType;
+  singleStyleTypeStore: IObjectStyleType;
   multiStyleTypeStore: MultiStyleTypeStoreType;
 } {
-  const singleStyleTypeStore: DeepObjectType = {};
+  const singleStyleTypeStore: IObjectStyleType = {};
   const multiStyleTypeStore: MultiStyleTypeStoreType = new Map();
   if (!data.stylesheet) return { singleStyleTypeStore, multiStyleTypeStore };
   data.stylesheet.rules.forEach((item: ReadCssStyleRuleType) => {

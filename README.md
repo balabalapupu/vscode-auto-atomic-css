@@ -1,27 +1,42 @@
 # auto-atomic-css README
 
-Convert the selected class’s style in the style tag into the attribute corresponding to the atomic style sheet, and replace the corresponding tag to the HTML.
+Automatically fix styles that are not atomized in style tags, when the style exists in the atomic stylesheet.
+
+If some properties of the current class do not exist in the atomic style sheet, they are fixed to the template by user selection or still exist in the same style tag.
+
+Atomic style sheets can be written through LESS and CSS.
+
+The first step of the plugin is to determine the location of the atomic style sheets, and then click the class you want to fix in the style tag.
+
+<image src="./r1.png" />
+<image src="./r2.png" />
+<image src="./r3.png" />
+<image src="./r4.png" />
 
 ## Features
-
-1. The selected class needs to be in Vue
-2. The corresponding atomic style sheet currently supports the less file format
 
 <image src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/8bce24ddf07344aabfd84f72bcb3524e~tplv-k3u1fbpfcp-zoom-1.image" width="70%" />
 
 ## Known Issues
 
-1. If the selected class is wrapped by other classes, the outer wrapping range will be ignored
-   - Maybe I won't fix this to prevent users from existing outside wrapper classes
-2. If the inner layer uses non-class selectors such as pseudo-classes and pseudo-elements, an accident will occur.
-   - This issue will be resolved in 1.0.1 around April.
-
 ## Release Notes
 
-### 1.0.0
+### 0.0.1
 
-Automatically modify atomic CSS styles in Vue template syntax.
+- Plugin can handle LESS / CSS compiled atomic styles
+- Plugins can handle Vue template syntax
+- Supports processing styles in which the style's level is completely class single tag
 
-Directory selected atom files support LESS or CSS format.
+- Fix template code confusion caused by correcting styles
 
-Recommended for use with ESLint.
+### 0.0.2
+
+- Supports split margin complex style
+
+- Supports split padding complex style
+- Supports split border complex style
+- Support for fixed into templates style tags
+
+### 0.0.3
+
+- Supports border-radius margin complex style

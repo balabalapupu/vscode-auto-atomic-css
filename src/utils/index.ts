@@ -49,37 +49,3 @@ export function getClassInStyle(
     classInStyleRange: newRange,
   };
 }
-
-// export function createFix(
-//   document: vscode.TextDocument,
-//   convertedCssStyle: ConvertedCssStyleType,
-//   edit: vscode.WorkspaceEdit
-// ): vscode.WorkspaceEdit {
-//   let sl = 0,
-//     el = document.lineCount;
-//   while (sl <= el) {
-//     const curLineText = document.lineAt(sl);
-//     if (curLineText.text.includes("<template")) {
-//       break;
-//     }
-//     sl++;
-//   }
-//   while (el >= sl) {
-//     const curLineText = document.lineAt(el - 1);
-//     if (curLineText.text.includes("</template")) {
-//       break;
-//     }
-//     el--;
-//   }
-//   const templateRange = new vscode.Range(
-//     new vscode.Position(sl, 0),
-//     new vscode.Position(el, 0)
-//   );
-//   const currentPageTemplace: string = document.getText(templateRange);
-//   handleHTMLBuParse5(
-//     edit,
-//     { currentPageTemplace, convertedCssStyle },
-//     document
-//   );
-//   return edit;
-// }

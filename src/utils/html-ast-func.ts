@@ -19,21 +19,26 @@ interface ChildHTMLNodeInterface {
 }
 
 export function createHtmlFixedStyle(
-  htmlEdit: vscode.WorkspaceEdit,
   document: vscode.TextDocument,
-  outputCSS: GenerateOutputCssStyleType
+  outputCSS: GenerateOutputCssStyleType,
+  editTemplate: TEditInterface
 ) {
+  // 找到 template 范围
   const currentPageTemplace: string = handleFindScoreOfTemplate(document);
+
+  // 解析模板
   const text: Document = htmlParseOption(currentPageTemplace);
 
+  // 模板语法转换
   const transferHtmlText: ChildHTMLNodeInterface = htmlTransterOption(
     text.childNodes[0]
   );
-  if (!transferHtmlText) return htmlEdit;
+  if (!transferHtmlText) return editTemplate;
 
-  htmlGenerateOptionBeta(document, htmlEdit, transferHtmlText, outputCSS);
+  // ast 生成需要处理的范围
+  htmlGenerateOptionBeta(document, transferHtmlText, outputCSS, editTemplate);
 
-  return htmlEdit;
+  return editTemplate;
 }
 function handleFindScoreOfTemplate(document: vscode.TextDocument): string {
   let sl = 0,
@@ -98,7 +103,7 @@ function revertHtmlOption(currentHTML: any, classTree: string[]) {
   const currentClassTree = JSON.parse(JSON.stringify(classTree));
   let checkCurrentClassCheck = "";
   if (currentHTML.attrs && currentHTML.attrs.length > 0) {
-    const attrsList: ObjectType = {};
+    const attrsList: IStyleType = {};
     currentHTML.attrs.forEach((item: { name: string; value: any }) => {
       attrsList[item.name] = item.value;
       if (item.name === "class") {
@@ -132,9 +137,9 @@ function htmlGenerateOptionBeta<
   V extends vscode.TextDocument,
   T extends ChildHTMLNodeInterface,
   U extends GenerateOutputCssStyleType,
-  P extends vscode.WorkspaceEdit
->(document: V, htmlEdit: P, transferHtmlText: T, outputCSS: U): P {
-  if (transferHtmlText.nodeName === "#text") return htmlEdit;
+  P extends TEditInterface
+>(document: V, transferHtmlText: T, outputCSS: U, editTemplate: P): P {
+  if (transferHtmlText.nodeName === "#text") return editTemplate;
   if (transferHtmlText.class && transferHtmlText.class !== "") {
     const { parentClassTree } = transferHtmlText;
     const currentNodeClassList = transferHtmlText.class.split(" ");
@@ -144,19 +149,19 @@ function htmlGenerateOptionBeta<
       outputCSS,
       parentClassTree.slice(0, -1)
     );
-    handletargetStyle(document, htmlEdit, targetStyleMap, transferHtmlText);
+    handletargetStyle(document, targetStyleMap, transferHtmlText, editTemplate);
   }
 
-  handleLoopChildNodes(document, transferHtmlText, outputCSS, htmlEdit);
+  handleLoopChildNodes(document, transferHtmlText, outputCSS, editTemplate);
 
-  return htmlEdit;
+  return editTemplate;
 }
 
 function handletargetStyle(
   document: vscode.TextDocument,
-  htmlEdit: vscode.WorkspaceEdit,
   targetStyleMap: GenerateOutputCssStyleType,
-  transferHtmlText: ChildHTMLNodeInterface
+  transferHtmlText: ChildHTMLNodeInterface,
+  editTemplate: TEditInterface
 ) {
   if ([...targetStyleMap.keys()].length === 0) return;
   const outputList: GenerateOutputCssStyleInterface = {
@@ -185,7 +190,10 @@ function handletargetStyle(
   const set = new Set([...originClassList, ...outputList.fixedList]);
   const newClassList = Array.from(set);
   const newClass = `class="${newClassList.join(" ")}"`;
-  htmlEdit.replace(document.uri, classRange, newClass);
+  editTemplate.classEdit.push({
+    range: classRange,
+    text: newClass,
+  });
 
   // 2. 改造 style
   if (Object.keys(outputList.notFixedCSSList).length > 0) {
@@ -208,7 +216,11 @@ function handletargetStyle(
       styleString === ""
         ? ` style="${newStyleList.join(";")}" `
         : `style="${newStyleList.join(";")}"`;
-    htmlEdit.replace(document.uri, styleRange, newStyle);
+
+    editTemplate.styleEdit.push({
+      range: styleRange,
+      text: newStyle,
+    });
   }
 }
 
@@ -287,9 +299,9 @@ function handleLoopChildNodes<
   V extends vscode.TextDocument,
   T extends ChildHTMLNodeInterface,
   U extends GenerateOutputCssStyleType,
-  P extends vscode.WorkspaceEdit
->(document: V, transferHtmlText: T, outputCSS: U, htmlEdit: P) {
+  P extends TEditInterface
+>(document: V, transferHtmlText: T, outputCSS: U, editTemplate: P) {
   transferHtmlText.childNodes.forEach((item: ChildHTMLNodeInterface) => {
-    htmlGenerateOptionBeta(document, htmlEdit, item, outputCSS);
+    htmlGenerateOptionBeta(document, item, outputCSS, editTemplate);
   });
 }
