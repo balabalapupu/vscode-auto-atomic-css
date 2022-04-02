@@ -1,11 +1,11 @@
 {
   "name": "vue-auto-atomic-css",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "wangtianyou",
   "engines": {
     "vscode": "^1.65.0"
   },
-  "icon": "autoCSS.png",
+  "icon": "autoCSS.jpeg",
   "displayName": "Vue Auto Atomic CSS",
   "description": "Vue 项目中使用自动化的 CSS 文件",
   "keywords": [

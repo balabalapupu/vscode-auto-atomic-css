@@ -9,9 +9,9 @@ type IStyleType = {
 type IObjectStyleType = {
   [propName: string]: IStyleType;
 };
-type DFSObjectType = {
+interface IStyleOutputInterface {
   [propName: string]: string | IStyleType;
-};
+}
 
 type CSSTYPE = {
   css: string;
@@ -50,9 +50,7 @@ interface TransOutputStyleObjectInterface {
 
 interface GenerateOutputCssStyleInterface {
   fixedList: string[];
-  notFixedCSSList: {
-    [key: string]: string;
-  };
+  notFixedCSSList: IStyleType;
 }
 
 type GenerateOutputCssStyleType = Map<

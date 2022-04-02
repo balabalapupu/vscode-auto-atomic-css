@@ -7,6 +7,7 @@ import {
 } from "./utils/css-ast-func";
 import { isAtStartOfSmiley, getClassInStyle } from "./utils/index";
 import { createHtmlFixedStyle } from "./utils/html-ast-func";
+import { handleFixedOnlyTransferClass, handleTransferAll } from "./utils/edit";
 
 let entryPath = "";
 
@@ -82,33 +83,16 @@ export class AutoAtomicCss implements vscode.CodeActionProvider {
     );
 
     // 只转换 class
-    const onlyFixedClassEdit = new vscode.WorkspaceEdit();
-    editTemplate.classEdit.map((item) => {
-      const range = item.range as vscode.Range;
-      onlyFixedClassEdit.replace(document.uri, range, item.text);
-    });
-    const fixOnlyClass = new vscode.CodeAction(
-      `convert to atomic class`,
-      vscode.CodeActionKind.QuickFix
+
+    const fixOnlyClass = handleFixedOnlyTransferClass(
+      document,
+      classInStyleRange,
+      outputCSS,
+      editTemplate
     );
-    fixOnlyClass.edit = onlyFixedClassEdit;
 
     // 全量转换
-    const fixedClassandStyleEdit = new vscode.WorkspaceEdit();
-    editTemplate.classEdit.map((item) => {
-      const range = item.range as vscode.Range;
-      fixedClassandStyleEdit.replace(document.uri, range, item.text);
-    });
-    editTemplate.styleEdit.map((item) => {
-      const range = item.range as vscode.Range;
-      fixedClassandStyleEdit.replace(document.uri, range, item.text);
-    });
-    fixedClassandStyleEdit.replace(document.uri, classInStyleRange, "");
-    const fixed = new vscode.CodeAction(
-      `convert all atomic class and style`,
-      vscode.CodeActionKind.QuickFix
-    );
-    fixed.edit = fixedClassandStyleEdit;
+    const fixed = handleTransferAll(document, classInStyleRange, editTemplate);
 
     return [fixOnlyClass, fixed];
   }
