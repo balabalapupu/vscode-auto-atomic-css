@@ -4,6 +4,8 @@
 
 # auto-atomic-css
 
+start: search `vue auto atomic css`
+
 Automatically fix unatomicized styles in style tags when styles exist in atomic stylesheets.
 
 The first step for the plugin is to locate the atomic stylesheet, then click on the class you want to fix in the styles tab. If some properties of the current class do not exist in the atomic stylesheet, either pin them into the template by user selection or still exist in the same style tag.
