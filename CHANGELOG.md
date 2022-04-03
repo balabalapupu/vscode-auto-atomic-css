@@ -1,5 +1,10 @@
 # Release Notes
 
+### 0.0.6
+
+- Support stylehub > 0.1.3
+- Now users can select the stylehub version type and customize the path of atomized stylesheet file
+
 ### 0.0.4
 
 - Support users to choose whether to atomize all the selected style into the template
