@@ -1,6 +1,6 @@
 /* eslint-disable curly */
 import * as vscode from "vscode";
-import getCommonStyle from "./utils/common-style";
+import { getBaseStyleConfig } from "./utils/common-style";
 const path = require("path");
 import {
   parseCurrentCSStoObject,
@@ -43,27 +43,9 @@ export class AutoAtomicCss implements vscode.CodeActionProvider {
         "/node_modules/@datafe/stylehub/lib/stylehub.css"
       );
     }
-    // 从入口文件获取 stylehub样式
-    const styleCurrentRes = await getCommonStyle(entryPath);
-    const styleBaseConfig = await getCommonStyle(stylehubConfig);
-    console.log(styleCurrentRes, "------", styleBaseConfig);
 
-    if (styleBaseConfig === "error" || styleCurrentRes === "error") return [];
-    const styleRes: StyleConfigType = {
-      multiStyleTypeStore: new Map(),
-      singleStyleTypeStore: {},
-    };
-    styleRes.multiStyleTypeStore = Object.assign(
-      styleCurrentRes.multiStyleTypeStore,
-      styleBaseConfig.multiStyleTypeStore
-    );
-    styleRes.singleStyleTypeStore = Object.assign(
-      styleCurrentRes.singleStyleTypeStore,
-      styleBaseConfig.singleStyleTypeStore
-    );
+    const styleRes = await getBaseStyleConfig(entryPath, stylehubConfig);
     // 逻辑问题
-    console.log(styleRes, "---styleRes---");
-
     // if (styleRes === "error") return [];
     const { singleStyleTypeStore: commonStyleList, multiStyleTypeStore } =
       styleRes;
