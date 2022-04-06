@@ -141,10 +141,10 @@ function handleBorderRadiusStyle(property: string, value: string) {
     case 2:
       const [tl2br, tr2bl] = [borderRadius[0], borderRadius[1]];
       return {
-        [`${property}-top-left-radius`]: tl2br,
-        [`${property}-top-right-radius`]: tr2bl,
-        [`${property}-bottom-left-radius`]: tr2bl,
-        [`${property}-bottom-right-radius`]: tl2br,
+        [`border-top-left-radius`]: tl2br,
+        [`border-top-right-radius`]: tr2bl,
+        [`border-bottom-left-radius`]: tr2bl,
+        [`border-bottom-right-radius`]: tl2br,
       };
     case 3:
       const [tl, tr2bl3, br] = [
@@ -153,10 +153,10 @@ function handleBorderRadiusStyle(property: string, value: string) {
         borderRadius[2],
       ];
       return {
-        [`${property}-top-left-radius`]: tl,
-        [`${property}-top-right-radius`]: tr2bl3,
-        [`${property}-bottom-left-radius`]: tr2bl3,
-        [`${property}-bottom-right-radius`]: br,
+        [`border-top-left-radius`]: tl,
+        [`border-top-right-radius`]: tr2bl3,
+        [`border-bottom-left-radius`]: tr2bl3,
+        [`border-bottom-right-radius`]: br,
       };
     default:
       const [t4, r4, b4, l4] = [
@@ -166,10 +166,10 @@ function handleBorderRadiusStyle(property: string, value: string) {
         borderRadius[3],
       ];
       return {
-        [`${property}-top-left-radius`]: t4,
-        [`${property}-top-right-radius`]: r4,
-        [`${property}-bottom-left-radius`]: b4,
-        [`${property}-bottom-right-radius`]: l4,
+        [`border-top-left-radius`]: t4,
+        [`border-top-right-radius`]: r4,
+        [`border-bottom-left-radius`]: b4,
+        [`border-bottom-right-radius`]: l4,
       };
   }
 }
