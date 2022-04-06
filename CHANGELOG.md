@@ -1,5 +1,9 @@
 # Release Notes
 
+### 0.0.7
+
+- fix border-radius template problem
+
 ### 0.0.6
 
 - Support stylehub > 0.1.3
