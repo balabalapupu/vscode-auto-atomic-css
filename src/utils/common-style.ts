@@ -9,51 +9,46 @@ const read = require("read-css");
 import { TARGETPATH } from "../constance/index";
 const ATOMICPATH = path.resolve(__dirname, "../../");
 
-/**
- * Read the less atomic css style sheet through less.render and convert it into css style sheet,
- * and then return it into ast format through read-css.
- * @returns Promise<IObjectStyleType> the IObjectStyleType is a css ast construct
- */
-export default async function getCommonStyle(entry: string): Promise<
-  | {
-      singleStyleTypeStore: IObjectStyleType;
-      multiStyleTypeStore: MultiStyleTypeStoreType;
-    }
-  | "error"
-> {
-  return await new Promise(async (resolve, reject) => {
-    const fileType = entry.split(".").slice(-1)[0];
-    switch (fileType) {
-      // less 文件转译
-      case "less":
-        await getReversedCSS(entry);
-        const dirRoot = ATOMICPATH + TARGETPATH;
-        read(dirRoot, (err: Error, data: ReadCssType) => {
-          const { singleStyleTypeStore, multiStyleTypeStore } =
-            handleCallback(data);
-          if (err) reject(err);
-          resolve({ singleStyleTypeStore, multiStyleTypeStore });
-        });
-        break;
-      // css 直接处理
-      case "css":
-        read(entry, (err: Error, data: ReadCssType) => {
-          const { singleStyleTypeStore, multiStyleTypeStore } =
-            handleCallback(data);
-          if (err) reject(err);
-          resolve({ singleStyleTypeStore, multiStyleTypeStore });
-        });
-        break;
+// export async function getCommonStyle(entry: string): Promise<
+//   | {
+//       singleStyleTypeStore: IObjectStyleType;
+//       multiStyleTypeStore: MultiStyleTypeStoreType;
+//     }
+//   | "error"
+// > {
+//   return await new Promise(async (resolve, reject) => {
+//     const fileType = entry.split(".").slice(-1)[0];
+//     switch (fileType) {
+//       // less 文件转译
+//       case "less":
+//         await getReversedCSS(entry);
+//         const dirRoot = ATOMICPATH + TARGETPATH;
+//         read(dirRoot, (err: Error, data: ReadCssType) => {
+//           const { singleStyleTypeStore, multiStyleTypeStore } =
+//             handleCallback(data);
+//           if (err) reject(err);
+//           resolve({ singleStyleTypeStore, multiStyleTypeStore });
+//         });
+//         break;
+//       // css 直接处理
+//       case "css":
+//         read(entry, (err: Error, data: ReadCssType) => {
+//           const { singleStyleTypeStore, multiStyleTypeStore } =
+//             handleCallback(data);
+//           if (err) reject(err);
+//           resolve({ singleStyleTypeStore, multiStyleTypeStore });
+//         });
+//         break;
 
-      default:
-        vscode.window.showInformationMessage(
-          `auto-atomic-css not support atomic file type: ${fileType}`
-        );
-        resolve("error");
-        break;
-    }
-  });
-}
+//       default:
+//         vscode.window.showInformationMessage(
+//           `auto-atomic-css not support atomic file type: ${fileType}`
+//         );
+//         resolve("error");
+//         break;
+//     }
+//   });
+// }
 
 /**
  * @param data the result of read-css's ast structure,
@@ -96,35 +91,35 @@ function handleCallback(data: ReadCssType): {
   return { singleStyleTypeStore, multiStyleTypeStore };
 }
 
-/**
- * read the result of less.render() and write result into root
- */
-function getReversedCSS(entry: string) {
-  const ROOTARR = entry.split("/");
-  const ROOTPATH = ROOTARR.slice(0, -1).join("/");
-  const ROOTNAME = ROOTARR.slice(-1);
-  return new Promise((resolve, reject) => {
-    handleDeleteFile("result.css");
-    if (!fs.existsSync(entry)) return;
-    const currentStyleFile = fs.readFileSync(entry);
-    less.render(
-      currentStyleFile.toString(),
-      { filename: path.resolve(ROOTPATH, `./${ROOTNAME}`) },
-      (err: string, data: CSSTYPE) => {
-        const dirRoot = ATOMICPATH + TARGETPATH;
-        fs.writeFile(dirRoot, data.css, (err: any) => {
-          if (err) {
-            reject("error");
-            return;
-          }
-          resolve("success");
-        });
-      }
-    );
-  });
-}
+// /**
+//  * read the result of less.render() and write result into root
+//  */
+// function getReversedCSS(entry: string) {
+//   const ROOTARR = entry.split("/");
+//   const ROOTPATH = ROOTARR.slice(0, -1).join("/");
+//   const ROOTNAME = ROOTARR.slice(-1);
+//   return new Promise((resolve, reject) => {
+//     handleDeleteFile("result.css");
+//     if (!fs.existsSync(entry)) return;
+//     const currentStyleFile = fs.readFileSync(entry);
+//     less.render(
+//       currentStyleFile.toString(),
+//       { filename: path.resolve(ROOTPATH, `./${ROOTNAME}`) },
+//       (err: string, data: CSSTYPE) => {
+//         const dirRoot = ATOMICPATH + TARGETPATH;
+//         fs.writeFile(dirRoot, data.css, (err: any) => {
+//           if (err) {
+//             reject("error");
+//             return;
+//           }
+//           resolve("success");
+//         });
+//       }
+//     );
+//   });
+// }
 
-function handleDeleteFile(target: string[] | string) {
+export function handleDeleteFile(target: string[] | string) {
   if (!Array.isArray(target)) {
     const currentFile = ATOMICPATH + "/" + target;
     if (!fs.existsSync(currentFile)) return;
@@ -137,4 +132,60 @@ function handleDeleteFile(target: string[] | string) {
       }
     });
   }
+}
+
+export async function getBaseStyleConfig(
+  entryPath: string,
+  stylehubConfig: string
+): Promise<{
+  singleStyleTypeStore: IObjectStyleType;
+  multiStyleTypeStore: MultiStyleTypeStoreType;
+}> {
+  return new Promise(async (resolve, reject) => {
+    let cssJson = "";
+    // 取出公共 css
+    if (stylehubConfig !== "") {
+      if (!fs.existsSync(stylehubConfig)) return;
+      cssJson = await fs.readFileSync(stylehubConfig).toString();
+    }
+
+    if (entryPath !== "") {
+      const fileType = entryPath.split(".").slice(-1)[0];
+      if (fileType === "css") {
+        cssJson += await fs.readFileSync(entryPath).toString();
+      } else if (fileType === "less") {
+        const res = await getReversedCSSBeta(entryPath);
+        cssJson += res;
+      }
+    }
+    const dirRoot = ATOMICPATH + "/outputReadyCSSBeta.css";
+    handleDeleteFile(dirRoot);
+    fs.writeFile(dirRoot, cssJson, (err: any) => {
+      if (err) return;
+      read(dirRoot, (err: Error, data: ReadCssType) => {
+        const { singleStyleTypeStore, multiStyleTypeStore } =
+          handleCallback(data);
+        if (err) reject(err);
+        resolve({ singleStyleTypeStore, multiStyleTypeStore });
+      });
+    });
+  });
+}
+
+function getReversedCSSBeta(entry: string) {
+  const ROOTARR = entry.split("/");
+  const ROOTPATH = ROOTARR.slice(0, -1).join("/");
+  const ROOTNAME = ROOTARR.slice(-1);
+  return new Promise((resolve, reject) => {
+    handleDeleteFile("result.css");
+    if (!fs.existsSync(entry)) return;
+    const currentStyleFile = fs.readFileSync(entry);
+    less.render(
+      currentStyleFile.toString(),
+      { filename: path.resolve(ROOTPATH, `./${ROOTNAME}`) },
+      (err: string, data: CSSTYPE) => {
+        resolve(data.css);
+      }
+    );
+  });
 }
