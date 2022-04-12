@@ -1,5 +1,9 @@
 # Release Notes
 
+### 0.0.8
+
+- fix border-radius template problem again
+
 ### 0.0.7
 
 - fix border-radius template problem
