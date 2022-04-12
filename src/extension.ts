@@ -45,8 +45,6 @@ export class AutoAtomicCss implements vscode.CodeActionProvider {
     }
 
     const styleRes = await getBaseStyleConfig(entryPath, stylehubConfig);
-    // 逻辑问题
-    // if (styleRes === "error") return [];
     const { singleStyleTypeStore: commonStyleList, multiStyleTypeStore } =
       styleRes;
     const { classInStyleText, classInStyleRange } = getClassInStyle(

@@ -42,10 +42,17 @@ export function handleTransCompoundtoSingle(
 // /* style | color */ border: outset #f33;
 // /* width | style | color */ border: medium dashed green;
 export function handleBorderStyle(property: string, value: string): IStyleType {
+  console.log(property, "---property---", value);
   const borderStyle = value.split(" ");
-  switch (borderStyle.length) {
+  let final = [];
+  if (borderStyle.length > 3) {
+    final = [borderStyle[0], borderStyle[1], borderStyle.slice(2).join(" ")];
+  } else {
+    final = [...borderStyle];
+  }
+  switch (final.length) {
     case 1:
-      const [sg] = [borderStyle[0]];
+      const [sg] = [final[0]];
       if (BORDER_STYLE.indexOf(sg) > -1) {
         return {
           [`${property}-style`]: sg,
@@ -58,7 +65,7 @@ export function handleBorderStyle(property: string, value: string): IStyleType {
         throw new Error(`${property}-style: ${value} is not a valid value`);
       }
     case 2:
-      const [ws, sc] = [borderStyle[0], borderStyle[1]];
+      const [ws, sc] = [final[0], final[1]];
       if (BORDER_STYLE.indexOf(ws) > -1) {
         return {
           [`${property}-style`]: ws,
@@ -73,7 +80,7 @@ export function handleBorderStyle(property: string, value: string): IStyleType {
         throw new Error(`${property}-style: ${value} is not a valid value`);
       }
     default:
-      const [w, s, c] = [borderStyle[0], borderStyle[1], borderStyle[2]];
+      const [w, s, c] = [final[0], final[1], final[2]];
       if (BORDER_STYLE.indexOf(s) > -1) {
         return {
           [`${property}-width`]: w,
