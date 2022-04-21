@@ -31,6 +31,35 @@ export function handleTransCompoundtoSingle(
     case "background":
       returnValue = handleBackgroundStyle(property, value);
       break;
+    case "color":
+      returnValue = handleColorStyle(property, value);
+      break;
+    default:
+      returnValue = {
+        [property]: value,
+      };
+      break;
+  }
+  return returnValue;
+}
+
+export function handleColorStyle(property: string, value: string): IStyleType {
+  const colorStyle = value.split(" ");
+  if (colorStyle.length > 1 || !colorStyle[0].startsWith("#")) {
+    return { [property]: value };
+  }
+  let returnValue: IStyleType = {};
+  switch (value) {
+    case "#ffffff":
+      returnValue = {
+        [property]: "#fff",
+      };
+      break;
+    case "#000000":
+      returnValue = {
+        [property]: "#000",
+      };
+      break;
     default:
       returnValue = {
         [property]: value,
@@ -207,8 +236,8 @@ function handleBorderRadiusStyle(property: string, value: string) {
       return {
         [`border-top-left-radius`]: t4,
         [`border-top-right-radius`]: r4,
-        [`border-bottom-left-radius`]: b4,
-        [`border-bottom-right-radius`]: l4,
+        [`border-bottom-right-radius`]: b4,
+        [`border-bottom-left-radius`]: l4,
       };
   }
 }

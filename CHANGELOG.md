@@ -2,6 +2,10 @@
 
 ### 0.0.9
 
+- add color modal and fix border modal
+
+### 0.0.9
+
 - add background-color fix
 
 ### 0.0.8
