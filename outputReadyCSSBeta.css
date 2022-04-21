@@ -943,6 +943,9 @@
 .lh-28 {
   line-height: 28px;
 }
+.lh-36 {
+  line-height: 36px;
+}
 .p-6 {
   padding: 6px;
 }
@@ -1041,6 +1044,21 @@
 }
 .bc-right-3 {
   border-right-color: #e9e9e9;
+}
+.bc-text-3 {
+  border-color: rgba(0, 0, 0, 0.6);
+}
+.bc-top-text-3 {
+  border-top-color: rgba(0, 0, 0, 0.6);
+}
+.bc-bottom-text-3 {
+  border-bottom-color: rgba(0, 0, 0, 0.6);
+}
+.bc-left-text-3 {
+  border-left-color: rgba(0, 0, 0, 0.6);
+}
+.bc-right-text-3 {
+  border-right-color: rgba(0, 0, 0, 0.6);
 }
 .fz-28 {
   font-size: 28px;

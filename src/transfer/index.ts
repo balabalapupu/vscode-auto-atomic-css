@@ -28,6 +28,9 @@ export function handleTransCompoundtoSingle(
     case "border-radius":
       returnValue = handleBorderRadiusStyle(property, value);
       break;
+    case "background":
+      returnValue = handleBackgroundStyle(property, value);
+      break;
     default:
       returnValue = {
         [property]: value,
@@ -36,13 +39,42 @@ export function handleTransCompoundtoSingle(
   }
   return returnValue;
 }
+
+export function handleBackgroundStyle(
+  property: string,
+  value: string
+): IStyleType {
+  const backgroundStyle = value.split(" ");
+  if (backgroundStyle.length > 1 || !backgroundStyle[0].startsWith("#")) {
+    return { [property]: value };
+  }
+  let returnValue: IStyleType = {};
+  switch (value) {
+    case "#ffffff":
+      returnValue = {
+        "background-color": "#fff",
+      };
+      break;
+    case "#000000":
+      returnValue = {
+        "background-color": "#000",
+      };
+      break;
+    default:
+      returnValue = {
+        "background-color": value,
+      };
+      break;
+  }
+  return returnValue;
+}
+
 // /* style */ border: solid;
 // /* Global values */ border: inherit | initial | unset;
 // /* width | style */ border: 2px dotted;
 // /* style | color */ border: outset #f33;
 // /* width | style | color */ border: medium dashed green;
 export function handleBorderStyle(property: string, value: string): IStyleType {
-  console.log(property, "---property---", value);
   const borderStyle = value.split(" ");
   let final = [];
   if (borderStyle.length > 3) {

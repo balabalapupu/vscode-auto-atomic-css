@@ -1,5 +1,9 @@
 # Release Notes
 
+### 0.0.9
+
+- add background-color fix
+
 ### 0.0.8
 
 - fix border-radius template problem again
