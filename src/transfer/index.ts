@@ -19,6 +19,18 @@ export function handleTransCompoundtoSingle(
     case "border":
       returnValue = handleBorderStyle(property, value);
       break;
+    case "border-top":
+      returnValue = handleBorderStyle(property, value);
+      break;
+    case "border-bottom":
+      returnValue = handleBorderStyle(property, value);
+      break;
+    case "border-left":
+      returnValue = handleBorderStyle(property, value);
+      break;
+    case "border-right":
+      returnValue = handleBorderStyle(property, value);
+      break;
     case "margin":
       returnValue = handleMarginorPaddingStyle(property, value);
       break;

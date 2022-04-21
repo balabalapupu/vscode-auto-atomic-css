@@ -946,6 +946,21 @@
 .lh-36 {
   line-height: 36px;
 }
+.p-1 {
+  padding: 1px;
+}
+.p-top-1 {
+  padding-top: 1px;
+}
+.p-bottom-1 {
+  padding-bottom: 1px;
+}
+.p-left-1 {
+  padding-left: 1px;
+}
+.p-right-1 {
+  padding-right: 1px;
+}
 .p-6 {
   padding: 6px;
 }
@@ -991,6 +1006,21 @@
 .p-right-24 {
   padding-right: 24px;
 }
+.br-100 {
+  border-radius: 100px;
+}
+.br-top-left-100 {
+  border-top-left-radius: 100px;
+}
+.br-top-right-100 {
+  border-top-right-radius: 100px;
+}
+.br-bottom-left-100 {
+  border-bottom-left-radius: 100px;
+}
+.br-bottom-right-100 {
+  border-bottom-right-radius: 100px;
+}
 .m-24 {
   margin: 24px;
 }
@@ -1027,8 +1057,17 @@
 .w-8 {
   width: 8px;
 }
+.h-2 {
+  height: 2px;
+}
+.h-8 {
+  height: 8px;
+}
 .h-12 {
   height: 12px;
+}
+.h-24 {
+  height: 24px;
 }
 .bc-3 {
   border-color: #e9e9e9;
