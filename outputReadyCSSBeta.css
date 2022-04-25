@@ -1021,6 +1021,21 @@
 .br-bottom-right-100 {
   border-bottom-right-radius: 100px;
 }
+.m-6 {
+  margin: 6px;
+}
+.m-top-6 {
+  margin-top: 6px;
+}
+.m-bottom-6 {
+  margin-bottom: 6px;
+}
+.m-left-6 {
+  margin-left: 6px;
+}
+.m-right-6 {
+  margin-right: 6px;
+}
 .m-24 {
   margin: 24px;
 }

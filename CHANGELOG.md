@@ -1,5 +1,9 @@
 # Release Notes
 
+### 0.0.12
+
+- fix bug
+
 ### 0.0.9
 
 - add color modal and fix border modal

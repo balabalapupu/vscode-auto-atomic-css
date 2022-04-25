@@ -233,7 +233,6 @@ function handleTargetClassStyle(
   const outputCSSMapKeys = [...outputCSS.keys()];
   // 准备输出的 CSS map： 存储可以用的样式
   const targetClassMap: GenerateOutputCssStyleType = new Map();
-
   outputCSSMapKeys.forEach((item: string[]) => {
     const targetClass = item[0];
     if (currentNodeClassList.includes(targetClass)) {
@@ -253,7 +252,9 @@ function isTreeNode(
   parentClassTree: string[]
 ): boolean {
   const _targetTree = JSON.parse(JSON.stringify(targetClassList));
-  parentClassTree.forEach((item) => {
+  const _parentClassTree = JSON.parse(JSON.stringify(parentClassTree));
+  _parentClassTree.reverse();
+  _parentClassTree.forEach((item: string) => {
     const itemList = item.split(" ");
     if (itemList.includes(_targetTree[0])) {
       _targetTree.shift();
