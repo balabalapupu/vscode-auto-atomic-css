@@ -1,5 +1,21 @@
 # Release Notes
 
+### 0.0.12
+
+- fix bug
+
+### 0.0.9
+
+- add color modal and fix border modal
+
+### 0.0.9
+
+- add background-color fix
+
+### 0.0.8
+
+- fix border-radius template problem again
+
 ### 0.0.7
 
 - fix border-radius template problem

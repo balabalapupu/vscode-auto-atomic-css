@@ -19,6 +19,18 @@ export function handleTransCompoundtoSingle(
     case "border":
       returnValue = handleBorderStyle(property, value);
       break;
+    case "border-top":
+      returnValue = handleBorderStyle(property, value);
+      break;
+    case "border-bottom":
+      returnValue = handleBorderStyle(property, value);
+      break;
+    case "border-left":
+      returnValue = handleBorderStyle(property, value);
+      break;
+    case "border-right":
+      returnValue = handleBorderStyle(property, value);
+      break;
     case "margin":
       returnValue = handleMarginorPaddingStyle(property, value);
       break;
@@ -28,6 +40,12 @@ export function handleTransCompoundtoSingle(
     case "border-radius":
       returnValue = handleBorderRadiusStyle(property, value);
       break;
+    case "background":
+      returnValue = handleBackgroundStyle(property, value);
+      break;
+    case "color":
+      returnValue = handleColorStyle(property, value);
+      break;
     default:
       returnValue = {
         [property]: value,
@@ -36,6 +54,62 @@ export function handleTransCompoundtoSingle(
   }
   return returnValue;
 }
+
+export function handleColorStyle(property: string, value: string): IStyleType {
+  const colorStyle = value.split(" ");
+  if (colorStyle.length > 1 || !colorStyle[0].startsWith("#")) {
+    return { [property]: value };
+  }
+  let returnValue: IStyleType = {};
+  switch (value) {
+    case "#ffffff":
+      returnValue = {
+        [property]: "#fff",
+      };
+      break;
+    case "#000000":
+      returnValue = {
+        [property]: "#000",
+      };
+      break;
+    default:
+      returnValue = {
+        [property]: value,
+      };
+      break;
+  }
+  return returnValue;
+}
+
+export function handleBackgroundStyle(
+  property: string,
+  value: string
+): IStyleType {
+  const backgroundStyle = value.split(" ");
+  if (backgroundStyle.length > 1 || !backgroundStyle[0].startsWith("#")) {
+    return { [property]: value };
+  }
+  let returnValue: IStyleType = {};
+  switch (value) {
+    case "#ffffff":
+      returnValue = {
+        "background-color": "#fff",
+      };
+      break;
+    case "#000000":
+      returnValue = {
+        "background-color": "#000",
+      };
+      break;
+    default:
+      returnValue = {
+        "background-color": value,
+      };
+      break;
+  }
+  return returnValue;
+}
+
 // /* style */ border: solid;
 // /* Global values */ border: inherit | initial | unset;
 // /* width | style */ border: 2px dotted;
@@ -43,9 +117,15 @@ export function handleTransCompoundtoSingle(
 // /* width | style | color */ border: medium dashed green;
 export function handleBorderStyle(property: string, value: string): IStyleType {
   const borderStyle = value.split(" ");
-  switch (borderStyle.length) {
+  let final = [];
+  if (borderStyle.length > 3) {
+    final = [borderStyle[0], borderStyle[1], borderStyle.slice(2).join(" ")];
+  } else {
+    final = [...borderStyle];
+  }
+  switch (final.length) {
     case 1:
-      const [sg] = [borderStyle[0]];
+      const [sg] = [final[0]];
       if (BORDER_STYLE.indexOf(sg) > -1) {
         return {
           [`${property}-style`]: sg,
@@ -58,7 +138,7 @@ export function handleBorderStyle(property: string, value: string): IStyleType {
         throw new Error(`${property}-style: ${value} is not a valid value`);
       }
     case 2:
-      const [ws, sc] = [borderStyle[0], borderStyle[1]];
+      const [ws, sc] = [final[0], final[1]];
       if (BORDER_STYLE.indexOf(ws) > -1) {
         return {
           [`${property}-style`]: ws,
@@ -73,7 +153,7 @@ export function handleBorderStyle(property: string, value: string): IStyleType {
         throw new Error(`${property}-style: ${value} is not a valid value`);
       }
     default:
-      const [w, s, c] = [borderStyle[0], borderStyle[1], borderStyle[2]];
+      const [w, s, c] = [final[0], final[1], final[2]];
       if (BORDER_STYLE.indexOf(s) > -1) {
         return {
           [`${property}-width`]: w,
@@ -168,8 +248,8 @@ function handleBorderRadiusStyle(property: string, value: string) {
       return {
         [`border-top-left-radius`]: t4,
         [`border-top-right-radius`]: r4,
-        [`border-bottom-left-radius`]: b4,
-        [`border-bottom-right-radius`]: l4,
+        [`border-bottom-right-radius`]: b4,
+        [`border-bottom-left-radius`]: l4,
       };
   }
 }
