@@ -43,15 +43,18 @@ export class AutoAtomicCss implements vscode.CodeActionProvider {
         "/node_modules/@datafe/stylehub/lib/stylehub.css"
       );
     }
+    console.log(stylehubConfig, "------");
 
     // 获取基础样式
     const styleRes = await getBaseStyleConfig(entryPath, stylehubConfig);
+    console.log(styleRes, "------");
     const { singleStyleTypeStore: commonStyleList, multiStyleTypeStore } =
       styleRes;
     const { classInStyleText, classInStyleRange } = getClassInStyle(
       document,
       range
     );
+    console.log(styleRes, "------");
 
     // 转换本地样式
     const transferRes = await parseCurrentCSStoObject(classInStyleText);
