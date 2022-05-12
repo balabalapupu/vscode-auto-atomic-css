@@ -1,6 +1,6 @@
 {
   "name": "vue-auto-atomic-css",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "publisher": "wangtianyou",
   "engines": {
     "vscode": "^1.65.0"
