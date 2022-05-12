@@ -1174,6 +1174,9 @@
 .bg-select-3 {
   background-color: #F08605;
 }
+.bg-fill {
+  background-color: #F8F8FA;
+}
 .ff-pm {
   font-family: PingFangSC-Medium;
 }
