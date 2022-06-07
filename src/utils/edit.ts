@@ -48,7 +48,13 @@ function handleTransferAllCSS(outputCSS: GenerateOutputCssStyleType) {
   const resultCSS: IStyleOutputInterface = handleConvertCSStoObject(outputCSS);
   const mainClass = Object.keys(resultCSS)[0];
   const mainClassValue = resultCSS[mainClass] as IStyleType;
-  return handleGenerateCSSObjecttoString(mainClass, mainClassValue);
+  let result = "";
+  Object.keys(resultCSS).forEach((item, index) => {
+    const itemClassValue = resultCSS[item] as IStyleType;
+    const itemResult = handleGenerateCSSObjecttoString(item, itemClassValue);
+    result += `${itemResult}\n`;
+  });
+  return result;
 }
 
 function handleGenerateCSSObjecttoString(

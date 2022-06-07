@@ -64,12 +64,12 @@ export function handleColorStyle(property: string, value: string): IStyleType {
   switch (value) {
     case "#ffffff":
       returnValue = {
-        [property]: "#fff",
+        [property]: "#ffffff",
       };
       break;
     case "#000000":
       returnValue = {
-        [property]: "#000",
+        [property]: "#000000",
       };
       break;
     default:
