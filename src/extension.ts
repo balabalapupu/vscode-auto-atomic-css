@@ -43,25 +43,78 @@ export class AutoAtomicCss implements vscode.CodeActionProvider {
         "/node_modules/@datafe/stylehub/lib/stylehub.css"
       );
     }
-    console.log(stylehubConfig, "------");
 
-    // 获取基础样式
-    const styleRes = await getBaseStyleConfig(entryPath, stylehubConfig);
-    console.log(styleRes, "------");
+    // 1. 获取基础样式
+    const styleRes: {
+      singleStyleTypeStore: IObjectStyleType;
+      multiStyleTypeStore: MultiStyleTypeStoreType;
+    } = await getBaseStyleConfig(entryPath, stylehubConfig);
     const { singleStyleTypeStore: commonStyleList, multiStyleTypeStore } =
       styleRes;
-    const { classInStyleText, classInStyleRange } = getClassInStyle(
+
+    // 2. 获取当前样式
+    let { classInStyleText, classInStyleRange } = getClassInStyle(
       document,
       range
     );
-    console.log(styleRes, "------");
 
-    // 转换本地样式
-    const transferRes = await parseCurrentCSStoObject(classInStyleText);
+    let _classInStyleText = classInStyleText;
+    let targetClassLine = 1;
+    let currentCount = 0;
+    let targetClassText = "";
+    if (classInStyleText.trim().startsWith("&")) {
+      for (let i = classInStyleRange.start.line - 1; i > 0; i--) {
+        const line = document.lineAt(i);
+        const { text = "" } = line;
+        const checkTargetLine: string[] = text
+          .split("")
+          .filter((item) => item === "{" || item === "}");
+        if (checkTargetLine.length) {
+          for (let i = checkTargetLine.length - 1; i >= 0; i--) {
+            if (checkTargetLine[i] === "}") {
+              currentCount--;
+            } else {
+              currentCount++;
+            }
+          }
+        }
+        if (currentCount === targetClassLine) {
+          if (/^&[(\w)-]+\s\{$/.test(text.trim())) {
+            const _target = /^&(\S+)/.exec(text.trim()) as RegExpExecArray;
+            console.log(_target, "---_target---");
+            targetClassText = _target[1] + targetClassText;
+            console.log(targetClassText, "------");
+            targetClassLine++;
+          } else {
+            const _target = /^\.(\S+)/.exec(text.trim()) as RegExpExecArray;
+            console.log(_target, "---_target---2");
+            if (_target && _target.length) {
+              targetClassText = _target[1] + targetClassText;
+              console.log(targetClassText, "------");
+              break;
+            }
+          }
+        }
+        if (text.includes("<style")) {
+          break;
+        }
+      }
+      _classInStyleText = _classInStyleText
+        .trim()
+        .replace(/^(&)*/, `.${targetClassText}`);
+    }
 
-    // 通过单原子样式表与当前样式作对比，生成转换后的样式
-    const outputCSS = generateOutputCSSStyle(commonStyleList, transferRes);
-    // 将转换后的样式转换为 vscode fixed 样式
+    // 3. 转换本地样式
+    const transferRes: Map<string[], IStyleType> =
+      await parseCurrentCSStoObject(_classInStyleText);
+
+    // 4. 通过单原子样式表与当前样式作对比，生成转换后的样式
+    const outputCSS: GenerateOutputCssStyleType = generateOutputCSSStyle(
+      commonStyleList,
+      transferRes
+    );
+
+    // 5. 将转换后的样式转换为 vscode fixed 样式
     const editTemplate: TEditInterface = createHtmlFixedStyle(
       document,
       outputCSS,
@@ -71,16 +124,15 @@ export class AutoAtomicCss implements vscode.CodeActionProvider {
       }
     );
 
-    // 只转换 class
-
-    const fixOnlyClass = handleFixedOnlyTransferClass(
+    // if 只转换 class 不转换不存在与原子样式表的 class
+    const fixOnlyClass: vscode.CodeAction = handleFixedOnlyTransferClass(
       document,
       classInStyleRange,
       outputCSS,
       editTemplate
     );
 
-    // 全量转换
+    // else 全量转换
     const fixed = handleTransferAll(document, classInStyleRange, editTemplate);
 
     return [fixOnlyClass, fixed];

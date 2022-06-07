@@ -17,7 +17,7 @@ export function isAtStartOfSmiley(
   const start = range.start;
   const line = document.lineAt(start.line);
   const { text = "" } = line;
-  var reg = /^\.[(\w)-]+\s\{$/;
+  var reg = /^(\.|&)\S+\s\{$/;
   return reg.test(text.trim());
 }
 

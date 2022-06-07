@@ -1,5 +1,11 @@
 # Release Notes
 
+### 0.0.15
+
+- adaptation LESS syntax （&）
+  - The '&any {' or '& &any {' syntax can be used in style.
+  - Attention when your mouse points to '& & {', automatic style modification will not be triggered, because ' & &any{' belongs to multiple classes and it is not currently adapted.
+
 ### 0.0.12
 
 - fix bug
